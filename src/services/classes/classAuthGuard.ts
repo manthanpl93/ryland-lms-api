@@ -45,50 +45,46 @@ export const canModifyClass = async (
   return canAdminAccessClass(classId, user.schoolId, app);
 };
 
-export const checkClassAccess =
-(app: Application) =>
-  async (context: any) => {
-    const { id, method, params } = context;
+export const checkClassAccess = async (context: any) => {
+  const { id, method, params, app } = context;
 
-    if (!id) {
-      return context;
-    }
-
-    // Skip find and create as they don't operate on a single class instance
-    if (method === "find" || method === "create") {
-      return context;
-    }
-
-    const hasAccess = await canAccessClass(id, params, app);
-
-    if (!hasAccess) {
-      throw new Forbidden("You do not have permission to access this class.");
-    }
-
+  if (!id) {
     return context;
-  };
+  }
 
-export const checkClassModifyPermission =
-(app: Application) =>
-  async (context: any) => {
-    const { id, method, params } = context;
-
-    if (!id) {
-      throw new BadRequest("Class ID is required for modifications");
-    }
-
-    if (!["patch", "remove", "update"].includes(method)) {
-      return context;
-    }
-
-    const hasPermission = await canModifyClass(id, params, app);
-
-    if (!hasPermission) {
-      throw new Forbidden("You do not have permission to modify this class.");
-    }
-
+  // Skip find and create as they don't operate on a single class instance
+  if (method === "find" || method === "create") {
     return context;
-  };
+  }
+
+  const hasAccess = await canAccessClass(id, params, app);
+
+  if (!hasAccess) {
+    throw new Forbidden("You do not have permission to access this class.");
+  }
+
+  return context;
+};
+
+export const checkClassModifyPermission = async (context: any) => {
+  const { id, method, params, app } = context;
+
+  if (!id) {
+    throw new BadRequest("Class ID is required for modifications");
+  }
+
+  if (!["patch", "remove", "update"].includes(method)) {
+    return context;
+  }
+
+  const hasPermission = await canModifyClass(id, params, app);
+
+  if (!hasPermission) {
+    throw new Forbidden("You do not have permission to modify this class.");
+  }
+
+  return context;
+};
 
 const canAdminAccessClass = async (
   classId: string,

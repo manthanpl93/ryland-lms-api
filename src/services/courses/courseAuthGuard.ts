@@ -67,57 +67,122 @@ export const canModifyCourse = async (
  * Hook to check course access before operations
  * Can be used in courses.hooks.ts or other services
  */
-export const checkCourseAccess = (app: Application) => {
-  return async (context: any) => {
-    const { id, params, method } = context;
-    const userId = params?.user?._id;
+export const checkCourseAccess = async (context: any) => {
+  const { id, params, method, app } = context;
+  const userId = params?.user?._id;
 
-    if (!userId) {
-      throw new Forbidden("Authentication required");
-    }
+  if (!userId) {
+    throw new Forbidden("Authentication required");
+  }
 
-    // Skip check for find and create operations
-    if (method === "find" || method === "create") {
-      return context;
-    }
-
-    // For get, patch, remove operations - check ownership
-    if (id) {
-      const hasAccess = await canAccessCourse(id, userId, params, app);
-      
-      if (!hasAccess) {
-        throw new Forbidden("You do not have permission to access this course.");
-      }
-    }
-
+  // Skip check for find and create operations
+  if (method === "find" || method === "create") {
     return context;
-  };
+  }
+
+  // For get, patch, remove operations - check ownership
+  if (id) {
+    const hasAccess = await canAccessCourse(id, userId, params, app);
+    
+    if (!hasAccess) {
+      throw new Forbidden("You do not have permission to access this course.");
+    }
+  }
+
+  return context;
 };
 
 /**
  * Hook to check course modification permissions
  * Stricter check for write operations
  */
-export const checkCourseModifyPermission = (app: Application) => {
-  return async (context: any) => {
-    const { id, params } = context;
-    const userId = params?.user?._id;
+export const checkCourseModifyPermission = async (context: any) => {
+  const { id, params, app } = context;
+  const userId = params?.user?._id;
 
-    if (!userId) {
-      throw new Forbidden("Authentication required");
+  if (!userId) {
+    throw new Forbidden("Authentication required");
+  }
+
+  // For modify operations - check ownership
+  if (id) {
+    const canModify = await canModifyCourse(id, userId, params, app);
+    
+    if (!canModify) {
+      throw new Forbidden("You do not have permission to modify this course.");
     }
+  }
 
-    // For modify operations - check ownership
-    if (id) {
-      const canModify = await canModifyCourse(id, userId, params, app);
-      
-      if (!canModify) {
-        throw new Forbidden("You do not have permission to modify this course.");
-      }
-    }
+  return context;
+};
 
+/**
+ * Hook to check class access for find operations
+ * Validates that user has access to the specified classId
+ */
+export const checkClassAccessForFind = async (context: any) => {
+  const { params, app } = context;
+  const user = params?.user;
+  const classId = params?.query?.classId;
+
+  if (!user?._id) {
+    throw new Forbidden("Authentication required");
+  }
+
+  // If no classId provided, let handler validate (it's required)
+  if (!classId) {
     return context;
-  };
+  }
+
+  // Check access based on role
+  switch (user.role) {
+  case "Admin":
+    // Admin can access courses in their school
+    const hasAdminAccess = await canAdminAccessCourse(
+      classId,
+      user.schoolId,
+      app
+    );
+    if (!hasAdminAccess) {
+      throw new Forbidden(
+        "You do not have permission to access courses in this class."
+      );
+    }
+    break;
+
+  case "Teacher":
+    // Teacher must be assigned to the class
+    const isAssigned = await isTeacherAssignedToClass(
+      classId,
+      user._id.toString(),
+      app
+    );
+    if (!isAssigned) {
+      throw new Forbidden(
+        "You are not assigned to this class."
+      );
+    }
+    break;
+
+  case "Student":
+    // Student must be enrolled in the class
+    const isEnrolled = await isStudentEnrolledInClass(
+      classId,
+      user._id.toString(),
+      app
+    );
+    if (!isEnrolled) {
+      throw new Forbidden(
+        "You are not enrolled in this class."
+      );
+    }
+    break;
+
+  default:
+    throw new Forbidden("Invalid user role");
+  }
+
+  return context;
 };
 
 const canAdminAccessCourse = async (

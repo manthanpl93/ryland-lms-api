@@ -1,6 +1,7 @@
 import { BadRequest } from "@feathersjs/errors";
 import { Application } from "../../../declarations";
 import createCoursesModel from "../../../models/courses.model";
+import mongoose from "mongoose";
 import {
   TeacherCourseParams,
   TeacherCourseData,
@@ -70,8 +71,8 @@ export const teacherPatch = async (
 };
 
 /**
- * Get teacher courses using MongoDB aggregation
- * Shows courses from all classes where teacher is assigned
+ * Get teacher courses
+ * Authorization is handled by checkClassAccessForFind hook
  */
 const getTeacherCourses = async (
   params: TeacherCourseParams,
@@ -79,74 +80,39 @@ const getTeacherCourses = async (
 ): Promise<TeacherCourseFindResponse> => {
   const query = params?.query || {};
   const { searchText, classId, skip = 0, limit = 10 } = query;
-  const user = params?.user;
 
-  if (!user?._id) {
-    throw new Error("User not authenticated");
+  // classId is required
+  if (!classId) {
+    throw new BadRequest("classId is required to fetch courses");
   }
 
-  // Build aggregation pipeline
-  const pipeline: any[] = [
-    // Stage 1: Lookup class-teachers to find classes where user is a teacher
-    {
-      $lookup: {
-        from: "class-teachers",
-        localField: "classId",
-        foreignField: "class",
-        as: "teacherAssignments",
-      },
-    },
-    // Stage 2: Filter courses where user is assigned as teacher
-    {
-      $match: {
-        "teacherAssignments.teacher": user._id,
-        status: { $nin: ["draft", "approved", "rejected"] },
-        $or: [{ deleted: { $exists: false } }, { deleted: false }],
-      },
-    },
-    // Stage 3: Remove the teacherAssignments field (cleanup)
-    {
-      $project: {
-        teacherAssignments: 0,
-      },
-    },
-  ];
+  // Validate classId is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(classId)) {
+    throw new BadRequest("Invalid classId format");
+  }
+
+  // Build query filter for courses
+  const filter: any = {
+    classId: new mongoose.Types.ObjectId(classId),
+    $or: [{ deleted: { $exists: false } }, { deleted: false }],
+  };
 
   // Add search text filter if provided
   if (searchText) {
-    pipeline.push({
-      $match: {
-        title: { $regex: new RegExp(searchText, "i") },
-      },
-    });
+    filter.title = { $regex: new RegExp(searchText, "i") };
   }
 
-  // Add classId filter if provided
-  if (classId) {
-    pipeline.push({
-      $match: {
-        classId: classId,
-      },
-    });
-  }
+  // Fetch courses with pagination
+  const data = await coursesModel
+    .find(filter)
+    .sort({ last_status_changed_at: -1 })
+    .skip(Number(skip))
+    .limit(Number(limit))
+    .lean()
+    .exec();
 
-  // Add sorting
-  pipeline.push({
-    $sort: { last_status_changed_at: -1 },
-  });
-
-  // Create a facet for both data and count
-  pipeline.push({
-    $facet: {
-      data: [{ $skip: Number(skip) }, { $limit: Number(limit) }],
-      totalCount: [{ $count: "count" }],
-    },
-  });
-
-  const result = await coursesModel.aggregate(pipeline).exec();
-
-  const data = result[0]?.data || [];
-  const total = result[0]?.totalCount[0]?.count || 0;
+  // Get total count
+  const total = await coursesModel.countDocuments(filter);
 
   return {
     data,

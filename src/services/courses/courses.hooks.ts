@@ -3,8 +3,11 @@ import {
   quizLessonSchema,
   validateQuestionLogic,
 } from "../../validations/quiz.validation";
-import { checkCourseAccess, checkCourseModifyPermission } from "./courseAuthGuard";
-import app from "../../app";
+import { 
+  checkCourseAccess, 
+  checkCourseModifyPermission,
+  checkClassAccessForFind 
+} from "./courseAuthGuard";
 
 const { authenticate } = feathersAuthentication.hooks;
 
@@ -45,12 +48,12 @@ async function validateQuizLessonWithYup(lesson: any) {
 export default {
   before: {
     all: [authenticate("jwt")],
-    find: [],
-    get: [checkCourseAccess(app)],
+    find: [checkClassAccessForFind],
+    get: [checkCourseAccess],
     create: [validateQuizData],
-    update: [validateQuizData, checkCourseModifyPermission(app)],
-    patch: [validateQuizData, checkCourseModifyPermission(app)],
-    remove: [checkCourseModifyPermission(app)],
+    update: [validateQuizData, checkCourseModifyPermission],
+    patch: [validateQuizData, checkCourseModifyPermission],
+    remove: [checkCourseModifyPermission],
   },
   after: {
     all: [],

@@ -22,28 +22,20 @@ export default {
     find: [restrictRoles(["Admin", "Teacher"])],
     get: [
       restrictRoles(["Admin", "Teacher", "Student"]),
-      async (context: any) => {
-        return checkClassAccess(context.app)(context);
-      }
+      checkClassAccess
     ],
     create: [restrictRoles(["Admin"])],
     update: [
       restrictRoles(["Admin"]),
-      async (context: any) => {
-        return checkClassModifyPermission(context.app)(context);
-      }
+      checkClassModifyPermission
     ],
     patch: [
       restrictRoles(["Admin"]),
-      async (context: any) => {
-        return checkClassModifyPermission(context.app)(context);
-      }
+      checkClassModifyPermission
     ],
     remove: [
       restrictRoles(["Admin"]),
-      async (context: any) => {
-        return checkClassModifyPermission(context.app)(context);
-      }
+      checkClassModifyPermission
     ],
   },
 

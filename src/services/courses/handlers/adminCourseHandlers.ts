@@ -166,8 +166,18 @@ const getAdminCourses = async (
   const { searchText, classId, skip = 0, limit = 10 } = query;
   const user = params?.user;
 
+  // classId is required
+  if (!classId) {
+    throw new BadRequest("classId is required to fetch courses");
+  }
+
+  // Validate classId is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(classId)) {
+    throw new BadRequest("Invalid classId format");
+  }
+
   const filter: any = {
-    status: { $nin: ["draft", "approved", "rejected"] },
+    classId: new mongoose.Types.ObjectId(classId),
     $and: [
       { $or: [{ deleted: { $exists: false } }, { deleted: { $ne: true } }] },
     ],
@@ -181,11 +191,6 @@ const getAdminCourses = async (
   // Filter by search text
   if (searchText) {
     filter["title"] = { $regex: new RegExp(searchText, "i") };
-  }
-
-  // Filter by classId if provided
-  if (classId) {
-    filter["classId"] = classId;
   }
 
   const records: any = await coursesModel
