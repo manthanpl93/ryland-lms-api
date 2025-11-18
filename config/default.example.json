@@ -1,0 +1,56 @@
+{
+  "host": "localhost",
+  "port": 3030,
+  "public": "../public/",
+  "paginate": {
+    "default": 10,
+    "max": 50
+  },
+  "authentication": {
+    "entity": "users",
+    "service": "users",
+    "secret": "your_jwt_secret_here",
+    "authStrategies": [
+      "jwt",
+      "local"
+    ],
+    "jwtOptions": {
+      "header": {
+        "typ": "access"
+      },
+      "audience": "https://yourdomain.com",
+      "issuer": "feathers",
+      "algorithm": "HS256",
+      "expiresIn": "1d"
+    },
+    "local": {
+      "usernameField": "email",
+      "passwordField": "password"
+    }
+  },
+  "mongodb": {
+    "CONNECTION_STRING": "mongodb://localhost:27017",
+    "DB_NAME": "ryland_lms_api"
+  },
+  "redis": {
+    "url": "redis://localhost:6379"
+  },
+  "smtp": {
+    "host": "smtp.mailgun.org",
+    "port": 587,
+    "from": "your_email@example.com",
+    "auth": {
+      "user": "your_mailgun_user",
+      "password": "YOUR_MAILGUN_PASSWORD_HERE"
+    }
+  },
+  "loginSecret": 111111,
+  "countryCode": "+91",
+  "userTimeZone": "Asia/Kolkata",
+  "API_URL": "http://localhost:3030",
+  "workerSocketToken": "your_worker_socket_token_here",
+  "openai": {
+    "apiKey": "YOUR_OPENAI_API_KEY_HERE"
+  }
+}
+

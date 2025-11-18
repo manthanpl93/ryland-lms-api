@@ -1,0 +1,18 @@
+{
+  "mongodb": {
+    "CONNECTION_STRING": "your_mongodb_connection_string",
+    "DB_NAME": "ryland_lms_api_staging"
+  },
+  "OTPRevealAuthCode": "your_otp_auth_code",
+  "twilio": {
+    "accountSid": "YOUR_TWILIO_ACCOUNT_SID_HERE",
+    "authToken": "YOUR_TWILIO_AUTH_TOKEN_HERE",
+    "from": "+1234567890"
+  },
+  "aws": {
+    "s3BucketName": "your-bucket-name",
+    "s3BucketRegion": "us-east-1"
+  },
+  "loginSecret": 111111
+}
+

@@ -1,0 +1,1105 @@
+{
+  "_id": "6764551d0882d427619b8f34",
+  "title": "Direct Care Worker Annual Inservice Education",
+  "learnings": [],
+  "authors": [
+    {
+      "_id": "65e7f67df1f3e8eaf8e59adf",
+      "name": "Harmeet",
+      "id": "65e7f67df1f3e8eaf8e59adf"
+    },
+    {
+      "_id": "65e36b00d3dae93c432c3ece",
+      "name": "Manthan",
+      "id": "65e36b00d3dae93c432c3ece"
+    },
+    {
+      "_id": "65e37e6ea4096074993fbeb5",
+      "name": "hasnain",
+      "id": "65e37e6ea4096074993fbeb5"
+    },
+    {
+      "_id": "66e065711123de8b2bfa47bd",
+      "name": "Pardeep",
+      "id": "66e065711123de8b2bfa47bd"
+    },
+    {
+      "_id": "66c331f0eb72ed5fadddedd2",
+      "name": "James",
+      "id": "66c331f0eb72ed5fadddedd2"
+    },
+    {
+      "_id": "66c1f38beb72ed5faddd9a71",
+      "name": "Kevin",
+      "id": "66c1f38beb72ed5faddd9a71"
+    },
+    {
+      "_id": "65fc67d0d20141c49a09a489",
+      "name": "Karan",
+      "id": "65fc67d0d20141c49a09a489"
+    }
+  ],
+  "accuracy": "80",
+  "owner": {
+    "_id": "65e36e10a5dffbaff311bd88",
+    "name": "Peter",
+    "id": "65e36e10a5dffbaff311bd88"
+  },
+  "status": "approved",
+  "courseAudience": ["65e341cc665ad5a75909a7ec", "65e341cc665ad5a75909a7ed"],
+  "visibilityLocations": [
+    "67b72b6cb0e8add5f198dcdc",
+    "679a41a5e658499070944766",
+    "679a41a5e658499070944767",
+    "679a41a5e658499070944768"
+  ],
+  "assignments": [
+    {
+      "language": "english",
+      "courseCompletion": 0,
+      "nonLinear": ["66e44617e40f213d9696df11"],
+      "linear": [],
+      "questions": [
+        {
+          "type": "single",
+          "question": "<p>The same hotline is used to call for both child and elder abuse.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>The administrator will follow-up with law enforcement and protective services to initiate an investigation of abuse.&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Abuse is intimidating or deceiving a victim in way that deprives them of money, assets or property for the benefit of someone other than the victim.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>Self-neglect is when an elderly client threatens his/her own safety or health by refusing needed food, water, clothing or medication.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Complete Homecare staff are <u>not</u> required by law to report actual or suspected violence, abuse, neglect or exploitation of a person under their care.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>If a client reports an incident of any kind about Complete Homecare, they will suffer disruption of service, reprisal, or discrimination.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>The first thing to always do when dealing with a critical incident is to safeguard the health and welfare of the client, even before calling the office.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Provider and staff misconduct is not considered a Critical Incident.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>Critical incidents that involve an employee may require that the employee be removed from the case, have no contact with the client or be suspended until the investigation is completed.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Employees should report a critical incident within 24-hours, if at all possible.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Clients are told of their right to lodge a complaint against the agency after an incident occurs.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>If a Client calls the office and says they have a complaint, only a supervisor can talk to them.&nbsp;&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>Complaints can be made both verbally or in writing by a client.&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>If the client does not like the way the agency has handled their complaint, they can file a grievance with the administrator to ask to have their complaint reviewed.&nbsp;</p>",
+          "options": [{ "text": "Tue" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Complete Homecare maintains a file on all complaints that are made in order to analyze the number of complaints made and resolved to the client’s satisfaction and referred to the Department of State.&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>Agency Policies and Procedures exist to assist in managing the agency.&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Physician’s Certification for Services is found under the Administration section of the Home Care policies.&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Infection Control/Safety Policies include the agency Emergency Management Plan.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Service Policies deal with personnel issues.&nbsp;&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>Per our Human Resource Policies, we must do an infection control report.&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>Quality Management is designed to guarantee that services are evaluated in accordance with the Administrator’s plan for Complete Homecare.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>Quality Management activities and reports include client record reviews, summary of client complaints, results of satisfaction surveys, and summary of incident reports.&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Satisfaction Surveys regarding client services are sent out one (1) time per month to clients and/or their families.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>The client Record Review process is completed by the staff member who cared for the client.&nbsp;</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>A critical incident is reported to the Department of Health through ERS and to the Department of Human Services (Office of Long Term Living) and Department of Aging through the EIM system.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Family and close friends are the only perpetrators of fraud and financial abuse.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>Using the client’s credit or ATM cards without their permission is considered financial abuse</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>If you suspect a client is being financially abused, you should first contact the local county Adult Protective Services agency or law enforcement officials.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        },
+        {
+          "type": "single",
+          "question": "<p>EVV is required by Medicaid to be completed by direct care workers at a minimum compliance rate of 85%.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>When in doubt, always err on the side of caution and report abuse.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [0]
+        },
+        {
+          "type": "single",
+          "question": "<p>Critical Incidents jeopardize the operation of the agency.</p>",
+          "options": [{ "text": "True" }, { "text": "False" }],
+          "correctAns": "",
+          "answers": [1]
+        }
+      ],
+      "accuracy": "85"
+    }
+  ],
+  "isReadyForPreview": true,
+  "modules": [
+    {
+      "title": "In-Service (English) 2024 ",
+      "lessons": [
+        {
+          "title": "Annual Direct Care Worker Inservice Education ",
+          "contentType": "media",
+          "type": "pdf",
+          "resource": {
+            "status": "finished",
+            "objectUrl": "https://media.x-treme.services/1734634124049_6_OLTL_Inservices_Consolidated_2024_10_04.pdf",
+            "fileName": "6 OLTL Inservices Consolidated 2024-10-04.pdf",
+            "fileType": "application/pdf",
+            "fileSize": 4289351
+          },
+          "content": "",
+          "_id": "67646a9e0882d427619b8fd5"
+        }
+      ],
+      "_id": "67646a9e0882d427619b8fd4"
+    },
+    {
+      "title": "Tuberculosis (TB) Risk Assessment Questionnaire",
+      "lessons": [
+        {
+          "title": "Tuberculosis (TB) Risk Assessment Questionnaire",
+          "contentType": "media",
+          "type": "pdf",
+          "resource": {
+            "status": "finished",
+            "objectUrl": "https://media.x-treme.services/1734639332590_TB_Survey_Annual.pdf",
+            "fileName": "TB Survey Annual.pdf",
+            "fileType": "application/pdf",
+            "fileSize": 277968
+          },
+          "content": "",
+          "_id": "67647ee90882d427619bac11"
+        }
+      ],
+      "_id": "67647ee90882d427619bac10"
+    }
+  ],
+  "reviews": [
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-19T19:13:07.911Z",
+          "status": "review",
+          "_id": "676470430882d427619b98f0"
+        },
+        {
+          "message": "Annual Direct Care Worker Inservice Education Testing ",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-19T19:13:26.000Z",
+          "status": "approved",
+          "_id": "676470560882d427619b9939"
+        }
+      ],
+      "user": "65e36e10a5dffbaff311bd88",
+      "date": "2024-12-19T19:13:07.911Z",
+      "versionNo": 1,
+      "_id": "676470430882d427619b98ef"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-19T20:15:43.201Z",
+          "status": "review",
+          "_id": "67647eef0882d427619bad02"
+        },
+        {
+          "message": "TB Survey Annual",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-19T20:16:01.000Z",
+          "status": "approved",
+          "_id": "67647f010882d427619bad46"
+        }
+      ],
+      "user": "65e36e10a5dffbaff311bd88",
+      "date": "2024-12-19T20:15:43.201Z",
+      "versionNo": 2,
+      "_id": "67647eef0882d427619bad01"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-23T14:21:33.674Z",
+          "status": "review",
+          "_id": "676971ed0882d427619ca86c"
+        },
+        {
+          "message": "Title description update",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-23T14:21:54.000Z",
+          "status": "approved",
+          "_id": "676972020882d427619ca8cf"
+        }
+      ],
+      "user": "65e36e10a5dffbaff311bd88",
+      "date": "2024-12-23T14:21:33.674Z",
+      "versionNo": 3,
+      "_id": "676971ed0882d427619ca86b"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-27T19:29:01.363Z",
+          "status": "review",
+          "_id": "676efffd7a7392bfae98acdc"
+        },
+        {
+          "message": "85%",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-27T19:29:10.000Z",
+          "status": "approved",
+          "_id": "676f00067a7392bfae98ad59"
+        }
+      ],
+      "user": "65e36e10a5dffbaff311bd88",
+      "date": "2024-12-27T19:29:01.363Z",
+      "versionNo": 4,
+      "_id": "676efffd7a7392bfae98acdb"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-27T19:31:21.569Z",
+          "status": "review",
+          "_id": "676f00897a7392bfae98b253"
+        },
+        {
+          "message": "orrected Q1-3 from multiple choice answer to single choice",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-27T19:31:35.000Z",
+          "status": "approved",
+          "_id": "676f00977a7392bfae98b2df"
+        }
+      ],
+      "user": "65e36e10a5dffbaff311bd88",
+      "date": "2024-12-27T19:31:21.569Z",
+      "versionNo": 5,
+      "_id": "676f00897a7392bfae98b252"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-27T19:49:56.601Z",
+          "status": "review",
+          "_id": "676f04e47a7392bfae98c1c7"
+        },
+        {
+          "message": "remove TB module and move to PandaDoc",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2024-12-27T19:50:17.000Z",
+          "status": "approved",
+          "_id": "676f04f97a7392bfae98c243"
+        }
+      ],
+      "user": "65e36e10a5dffbaff311bd88",
+      "date": "2024-12-27T19:49:56.601Z",
+      "versionNo": 6,
+      "_id": "676f04e47a7392bfae98c1c6"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2025-02-06T18:25:55.080Z",
+          "status": "review",
+          "_id": "67a4feb37a7392bfaead7de4"
+        },
+        {
+          "message": "update document",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2025-02-06T18:26:11.000Z",
+          "status": "approved",
+          "_id": "67a4fec37a7392bfaead7ead"
+        }
+      ],
+      "user": "65e36e10a5dffbaff311bd88",
+      "date": "2025-02-06T18:25:55.080Z",
+      "versionNo": 7,
+      "_id": "67a4feb37a7392bfaead7de3"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "66e065711123de8b2bfa47bd",
+          "date": "2025-02-18T13:49:58.441Z",
+          "status": "review",
+          "_id": "67b490067a7392bfaeaed7bf"
+        },
+        {
+          "message": "Welcome and compilation notification added",
+          "user": "66e065711123de8b2bfa47bd",
+          "date": "2025-02-18T13:55:53.000Z",
+          "status": "approved",
+          "_id": "67b491697a7392bfaeaeda86"
+        }
+      ],
+      "user": "66e065711123de8b2bfa47bd",
+      "date": "2025-02-18T13:49:58.441Z",
+      "versionNo": 8,
+      "_id": "67b490067a7392bfaeaed7be"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2025-02-18T16:28:25.217Z",
+          "status": "review",
+          "_id": "67b4b5297a7392bfaeaee897"
+        },
+        {
+          "message": "added kingson",
+          "user": "65e36e10a5dffbaff311bd88",
+          "date": "2025-02-18T16:28:38.000Z",
+          "status": "approved",
+          "_id": "67b4b5367a7392bfaeaee97e"
+        }
+      ],
+      "user": "65e36e10a5dffbaff311bd88",
+      "date": "2025-02-18T16:28:25.217Z",
+      "versionNo": 9,
+      "_id": "67b4b5297a7392bfaeaee896"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "66c1f38beb72ed5faddd9a71",
+          "date": "2025-02-27T17:11:10.470Z",
+          "status": "review",
+          "_id": "67c09cae7a7392bfaeb0748f"
+        },
+        {
+          "message": "test",
+          "user": "66c1f38beb72ed5faddd9a71",
+          "date": "2025-02-27T17:11:30.000Z",
+          "status": "approved",
+          "_id": "67c09cc27a7392bfaeb07591"
+        }
+      ],
+      "user": "66c1f38beb72ed5faddd9a71",
+      "date": "2025-02-27T17:11:10.470Z",
+      "versionNo": 10,
+      "_id": "67c09cae7a7392bfaeb0748e"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "66c1f38beb72ed5faddd9a71",
+          "date": "2025-03-03T15:36:47.206Z",
+          "status": "review",
+          "_id": "67c5cc8f7a7392bfaeb20c3a"
+        },
+        {
+          "message": ".",
+          "user": "67225e5eb00bf8ee29459279",
+          "date": "2025-03-03T21:53:05.000Z",
+          "status": "approved",
+          "_id": "67c624c17a7392bfaeb2917a"
+        }
+      ],
+      "user": "66c1f38beb72ed5faddd9a71",
+      "date": "2025-03-03T15:36:47.206Z",
+      "versionNo": 11,
+      "_id": "67c5cc8f7a7392bfaeb20c39"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "66e065711123de8b2bfa47bd",
+          "date": "2025-05-12T15:25:37.109Z",
+          "status": "review",
+          "_id": "682212f1ee391c26dc5efed0"
+        },
+        {
+          "message": "Karan added as author to edit and review.",
+          "user": "66e065711123de8b2bfa47bd",
+          "date": "2025-05-12T15:26:32.000Z",
+          "status": "approved",
+          "_id": "68221328ee391c26dc5f0156"
+        }
+      ],
+      "user": "66e065711123de8b2bfa47bd",
+      "date": "2025-05-12T15:25:37.109Z",
+      "versionNo": 12,
+      "_id": "682212f1ee391c26dc5efecf"
+    },
+    {
+      "status": "approved",
+      "messages": [
+        {
+          "message": "",
+          "user": "65fc67d0d20141c49a09a489",
+          "date": "2025-05-22T19:16:26.775Z",
+          "status": "review",
+          "_id": "682f780a125f79cee54498a0"
+        },
+        {
+          "message": "Added question no 31 on the request and approval of Heather and Cherie Shulick #INC- 6129",
+          "user": "66e065711123de8b2bfa47bd",
+          "date": "2025-05-22T19:18:16.000Z",
+          "status": "approved",
+          "_id": "682f7878125f79cee5449a39"
+        }
+      ],
+      "user": "65fc67d0d20141c49a09a489",
+      "date": "2025-05-22T19:16:26.775Z",
+      "versionNo": 13,
+      "_id": "682f780a125f79cee544989f"
+    }
+  ],
+  "createdAt": "2024-12-19T17:17:17.040Z",
+  "updatedAt": "2025-05-22T19:18:16.569Z",
+  "__v": 0,
+  "courseDescription": "<p>Direct Care Worker Annual Inservice Education</p>",
+  "courseImage": {
+    "status": "finished",
+    "objectUrl": "https://media.x-treme.services/1734629325430_success_4168389_1280.jpg",
+    "fileName": "success-4168389_1280.jpg",
+    "fileType": "image/jpeg",
+    "fileSize": 415511
+  },
+  "id": "6764551d0882d427619b8f34",
+  "certificateDetails": {
+    "title": "Inservice Education",
+    "courseDuration": "06:00",
+    "instructorName": "Cherie Shulick",
+    "courseDetails": "Direct Care Worker Inservice Education",
+    "designationTitle": "Administrator",
+    "designationSubTitle": "Complete Home Care"
+  },
+  "last_status_changed_at": "2025-05-22T19:18:16.561Z",
+  "assignmentRequired": true,
+  "enrolledCourses": [
+    {
+      "_id": "6764758e0882d427619ba69d",
+      "userId": "65e36e10a5dffbaff311bd88",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 2,
+      "progressPercentage": 100,
+      "joinedDate": "2024-12-19T19:35:42.100Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2024-12-19T19:35:43.079Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2024-12-19T19:35:42.958Z",
+              "finishDate": "2025-02-06T18:18:40.581Z",
+              "completed": "yes",
+              "_id": "6764758f0882d427619ba6b3"
+            }
+          ],
+          "_id": "6764758f0882d427619ba6b2"
+        },
+        {
+          "moduleId": "67647ee90882d427619bac10",
+          "startDate": "2025-02-06T18:18:44.812Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67647ee90882d427619bac11",
+              "startDate": "2025-02-06T18:18:44.641Z",
+              "finishDate": "2025-02-06T18:18:44.988Z",
+              "completed": "yes",
+              "_id": "67a4fd047a7392bfaead7849"
+            }
+          ],
+          "_id": "67a4fd047a7392bfaead7848"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67646a9e0882d427619b8fd5",
+      "lastWatchedModule": "67646a9e0882d427619b8fd4",
+      "completedAt": "2025-02-06T18:18:45.098Z",
+      "id": "6764758e0882d427619ba69d"
+    },
+    {
+      "_id": "676ef4c57a7392bfae988329",
+      "userId": "66c1f38beb72ed5faddd9a71",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 2,
+      "progressPercentage": 100,
+      "joinedDate": "2024-12-27T18:41:09.678Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2024-12-27T18:41:10.723Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2024-12-27T18:41:10.486Z",
+              "finishDate": "2024-12-27T18:41:23.188Z",
+              "completed": "yes",
+              "_id": "676ef4c67a7392bfae98833f"
+            }
+          ],
+          "_id": "676ef4c67a7392bfae98833e"
+        },
+        {
+          "moduleId": "67647ee90882d427619bac10",
+          "startDate": "2024-12-27T18:41:24.637Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67647ee90882d427619bac11",
+              "startDate": "2024-12-27T18:41:24.397Z",
+              "finishDate": "2024-12-27T18:41:24.711Z",
+              "completed": "yes",
+              "_id": "676ef4d47a7392bfae98836b"
+            }
+          ],
+          "_id": "676ef4d47a7392bfae98836a"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67647ee90882d427619bac11",
+      "lastWatchedModule": "67647ee90882d427619bac10",
+      "completedAt": "2024-12-27T18:41:24.916Z",
+      "id": "676ef4c57a7392bfae988329"
+    },
+    {
+      "_id": "677408f17a7392bfae991180",
+      "userId": "66e065711123de8b2bfa47bd",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 2,
+      "progressPercentage": 100,
+      "joinedDate": "2024-12-31T15:08:33.451Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2024-12-31T15:08:38.292Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2024-12-31T15:08:38.145Z",
+              "finishDate": "2024-12-31T15:09:30.478Z",
+              "completed": "yes",
+              "_id": "677408f67a7392bfae991196"
+            }
+          ],
+          "_id": "677408f67a7392bfae991195"
+        },
+        {
+          "moduleId": "67647ee90882d427619bac10",
+          "startDate": "2024-12-31T15:09:37.770Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67647ee90882d427619bac11",
+              "startDate": "2024-12-31T15:09:37.579Z",
+              "finishDate": "2024-12-31T15:09:39.436Z",
+              "completed": "yes",
+              "_id": "677409317a7392bfae9911d4"
+            }
+          ],
+          "_id": "677409317a7392bfae9911d3"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67646a9e0882d427619b8fd5",
+      "lastWatchedModule": "67646a9e0882d427619b8fd4",
+      "completedAt": "2024-12-31T15:09:39.191Z",
+      "id": "677408f17a7392bfae991180"
+    },
+    {
+      "_id": "67740df77a7392bfae991f78",
+      "userId": "65fc67d0d20141c49a09a489",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 2,
+      "progressPercentage": 100,
+      "joinedDate": "2024-12-31T15:29:59.244Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2024-12-31T15:30:02.851Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2024-12-31T15:30:02.431Z",
+              "finishDate": "2024-12-31T15:30:32.218Z",
+              "completed": "yes",
+              "_id": "67740dfa7a7392bfae991f8e"
+            }
+          ],
+          "_id": "67740dfa7a7392bfae991f8d"
+        },
+        {
+          "moduleId": "67647ee90882d427619bac10",
+          "startDate": "2024-12-31T15:30:34.113Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67647ee90882d427619bac11",
+              "startDate": "2024-12-31T15:30:33.679Z",
+              "finishDate": "2024-12-31T15:30:34.664Z",
+              "completed": "yes",
+              "_id": "67740e1a7a7392bfae991fba"
+            }
+          ],
+          "_id": "67740e1a7a7392bfae991fb9"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67647ee90882d427619bac11",
+      "lastWatchedModule": "67647ee90882d427619bac10",
+      "completedAt": "2024-12-31T15:30:34.771Z",
+      "id": "67740df77a7392bfae991f78"
+    },
+    {
+      "_id": "67b60a767a7392bfaeaf1d47",
+      "userId": "6736031a73e1ef7dfada851c",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 2,
+      "progressPercentage": 100,
+      "joinedDate": "2025-02-19T16:44:38.089Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2025-02-19T16:44:38.533Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2025-02-19T16:44:38.281Z",
+              "finishDate": "2025-02-19T17:39:54.741Z",
+              "completed": "yes",
+              "_id": "67b60a767a7392bfaeaf1d66"
+            }
+          ],
+          "_id": "67b60a767a7392bfaeaf1d65"
+        },
+        {
+          "moduleId": "67647ee90882d427619bac10",
+          "startDate": "2025-02-19T17:42:56.973Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67647ee90882d427619bac11",
+              "startDate": "2025-02-19T17:42:56.568Z",
+              "finishDate": "2025-02-19T17:42:57.273Z",
+              "completed": "yes",
+              "_id": "67b618207a7392bfaeaf1df1"
+            }
+          ],
+          "_id": "67b618207a7392bfaeaf1df0"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67647ee90882d427619bac11",
+      "lastWatchedModule": "67647ee90882d427619bac10",
+      "completedAt": "2025-02-19T17:42:57.497Z",
+      "id": "67b60a767a7392bfaeaf1d47"
+    },
+    {
+      "_id": "67c8b22b184cd14fd6a71c84",
+      "userId": "67b4f44e7a7392bfaeaefdcd",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 2,
+      "progressPercentage": 100,
+      "joinedDate": "2025-03-05T20:20:59.192Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2025-03-05T20:21:00.195Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2025-03-05T20:20:59.952Z",
+              "finishDate": "2025-03-05T20:32:53.772Z",
+              "completed": "yes",
+              "_id": "67c8b22c184cd14fd6a71c9d"
+            }
+          ],
+          "_id": "67c8b22c184cd14fd6a71c9c"
+        },
+        {
+          "moduleId": "67647ee90882d427619bac10",
+          "startDate": "2025-03-05T20:32:59.010Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67647ee90882d427619bac11",
+              "startDate": "2025-03-05T20:32:58.762Z",
+              "finishDate": "2025-03-05T20:32:59.231Z",
+              "completed": "yes",
+              "_id": "67c8b4fb184cd14fd6a85967"
+            }
+          ],
+          "_id": "67c8b4fb184cd14fd6a85966"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67647ee90882d427619bac11",
+      "lastWatchedModule": "67647ee90882d427619bac10",
+      "completedAt": "2025-03-05T20:32:59.380Z",
+      "id": "67c8b22b184cd14fd6a71c84"
+    },
+    {
+      "_id": "67c8c323184cd14fd6b0226b",
+      "userId": "67350cc673e1ef7dfad87654",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 1,
+      "progressPercentage": 50,
+      "joinedDate": "2025-03-05T21:33:23.514Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2025-03-05T21:33:23.923Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2025-03-05T21:33:23.699Z",
+              "finishDate": "2025-03-05T21:46:58.216Z",
+              "completed": "yes",
+              "_id": "67c8c323184cd14fd6b02284"
+            }
+          ],
+          "_id": "67c8c323184cd14fd6b02283"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67646a9e0882d427619b8fd5",
+      "lastWatchedModule": "67646a9e0882d427619b8fd4",
+      "id": "67c8c323184cd14fd6b0226b"
+    },
+    {
+      "_id": "67f5177905569dcfcf985ff1",
+      "userId": "677849c17a7392bfaea17440",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 2,
+      "progressPercentage": 100,
+      "joinedDate": "2025-04-08T12:32:57.988Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2025-04-08T12:32:59.282Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2025-04-08T12:32:59.097Z",
+              "finishDate": "2025-04-08T12:34:29.922Z",
+              "completed": "yes",
+              "_id": "67f5177b05569dcfcf98600a"
+            }
+          ],
+          "_id": "67f5177b05569dcfcf986009"
+        },
+        {
+          "moduleId": "67647ee90882d427619bac10",
+          "startDate": "2025-04-08T12:34:33.391Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67647ee90882d427619bac11",
+              "startDate": "2025-04-08T12:34:33.141Z",
+              "finishDate": "2025-04-08T12:34:33.819Z",
+              "completed": "yes",
+              "_id": "67f517d905569dcfcf986036"
+            }
+          ],
+          "_id": "67f517d905569dcfcf986035"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67647ee90882d427619bac11",
+      "lastWatchedModule": "67647ee90882d427619bac10",
+      "completedAt": "2025-04-08T12:34:33.909Z",
+      "id": "67f5177905569dcfcf985ff1"
+    },
+    {
+      "_id": "681100fdee391c26dc2cf6f2",
+      "userId": "67bf6ac47a7392bfaeaff00a",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 2,
+      "progressPercentage": 100,
+      "joinedDate": "2025-04-29T16:40:29.253Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2025-04-29T16:40:29.840Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2025-04-29T16:40:29.628Z",
+              "finishDate": "2025-04-29T17:06:46.574Z",
+              "completed": "yes",
+              "_id": "681100fdee391c26dc2cf70b"
+            }
+          ],
+          "_id": "681100fdee391c26dc2cf70a"
+        },
+        {
+          "moduleId": "67647ee90882d427619bac10",
+          "startDate": "2025-04-29T17:07:06.611Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67647ee90882d427619bac11",
+              "startDate": "2025-04-29T17:07:06.282Z",
+              "finishDate": "2025-04-29T17:07:07.292Z",
+              "completed": "yes",
+              "_id": "6811073aee391c26dc2d096a"
+            }
+          ],
+          "_id": "6811073aee391c26dc2d0969"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67647ee90882d427619bac11",
+      "lastWatchedModule": "67647ee90882d427619bac10",
+      "completedAt": "2025-04-29T17:07:07.459Z",
+      "id": "681100fdee391c26dc2cf6f2"
+    },
+    {
+      "_id": "68128d14ee391c26dc35a163",
+      "userId": "67bf698e7a7392bfaeafefec",
+      "courseId": "6764551d0882d427619b8f34",
+      "lecturesAttempted": 0,
+      "progressPercentage": 0,
+      "joinedDate": "2025-04-30T20:50:28.882Z",
+      "progressHistory": [
+        {
+          "moduleId": "67646a9e0882d427619b8fd4",
+          "startDate": "2025-04-30T20:50:29.317Z",
+          "finishDate": null,
+          "totalLessonsFinished": 0,
+          "completed": "no",
+          "lessons": [
+            {
+              "lessonId": "67646a9e0882d427619b8fd5",
+              "startDate": "2025-04-30T20:50:29.092Z",
+              "finishDate": null,
+              "completed": "no",
+              "_id": "68128d15ee391c26dc35a17c"
+            }
+          ],
+          "_id": "68128d15ee391c26dc35a17b"
+        }
+      ],
+      "__v": 0,
+      "lastWatchedLesson": "67646a9e0882d427619b8fd5",
+      "lastWatchedModule": "67646a9e0882d427619b8fd4",
+      "id": "68128d14ee391c26dc35a163"
+    }
+  ]
+}

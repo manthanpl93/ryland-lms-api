@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Template</title>
+  </head>
+  <body
+    style="
+      font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+      margin: 0;
+      padding: 0;
+    "
+  >
+    <!-- Container table for the entire email -->
+    <table
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      width="100%"
+      style="background-color: #dbdfff"
+    >
+      <tr>
+        <td align="center" valign="top" style="padding: 50px 0">
+          <!-- Inner table for content -->
+          <table
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="70%"
+            style="background-color: #fff; border-radius: 10px"
+          >
+            <tr>
+              <td align="center" valign="top" style="padding: 25px 0">
+                <!-- Logo -->
+                <img
+                  src="https://training.x-treme.services/logo.png"
+                  alt="xtcare-logo"
+                  width="100"
+                  height="auto"
+                  style="display: block; margin: 0 auto 15px"
+                />
+
+                <!-- Heading -->
+                <h2
+                  style="
+                    font-family: &quot;IBM Plex Sans&quot;, sans-serif;
+                    font-weight: 700;
+                    font-size: 24px;
+                    line-height: 1.4;
+                    margin: 0 0 15px;
+                  "
+                >
+                  Your certificate is now ready to download.
+                </h2>
+
+                <!-- Text content -->
+                <p style="margin: 0 0 15px; font-size: 16px">
+                  Click on the button below to download your certificate:
+                </p>
+
+                <!-- Button -->
+                <table
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="margin: 0 auto"
+                >
+                  <tr>
+                    <td
+                      align="center"
+                      valign="middle"
+                      bgcolor="#01108e"
+                      style="border-radius: 50px"
+                    >
+                      <a
+                        href="__report_link_here__"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style="
+                          display: inline-block;
+                          text-decoration: none;
+                          padding: 15px 30px;
+                          font-size: 16px;
+                          color: #fff;
+                        "
+                        >
+                        <img src="https://api.x-treme.services/download-icon.png" alt="download-icon" width="25" height="auto" style=" margin: auto 15px;">
+                        Download Certificate</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Note -->
+                <p style="margin: 15px 0 0; font-size: 14px">
+                  This link will expire in 24 hours.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,303 @@
+import app from "../app";
+import twilio from "twilio";
+import configuration from "@feathersjs/configuration";
+const { countryCode = "+1", API_URL, aws } = configuration()();
+import createCoursePreviewModel from "../models/course-preview.model";
+import generateCertificate from "./certificate-generator";
+import { generatePDF } from "./pdf-generator";
+import moment from "moment-timezone";
+import { sendEmail } from "./email";
+import * as AWS from "aws-sdk";
+import fs from "fs";
+import mongoose from "mongoose";
+import CategoriesModel from "../models/categories.model";
+import categoriesModel from "../models/categories.model";
+
+AWS.config.update({ region: aws.s3BucketRegion });
+const s3 = new AWS.S3();
+
+export const generateRandomString = (length: number) => {
+  const charset =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let randomString = "";
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * charset.length);
+    randomString += charset.charAt(randomIndex);
+  }
+
+  return randomString;
+};
+
+export const sendSMS = async (mobileNo: string, message: string) => {
+  console.log("send SMS----", mobileNo, " - ", message);
+  if (process.env.NODE_ENV === "development") return;
+  const twilioCreds = app.get("twilio");
+  const { accountSid, authToken, from } = twilioCreds;
+  try {
+    const client = twilio(accountSid, authToken);
+    const resp = await client.messages.create({
+      body: message,
+      to: `${countryCode}${mobileNo}`, // Text your number
+      from: from, // From a valid Twilio number
+    });
+    return resp;
+  } catch (err) {
+    console.log("Error occurred while sending SMS", err);
+    return err;
+  }
+};
+
+export const sendSmsVerifyCode = (to: string, channel: string = "sms") => {
+  try {
+    if (process.env.NODE_ENV === "development") return;
+    const twilioCreds = app.get("twilio");
+    const { accountSid, authToken, from } = twilioCreds;
+    const client = twilio(accountSid, authToken);
+    client.verify.v2.services("cdscds").verifications.create({
+      to,
+      channel,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const smsCheckVerifyCode = (to: string, code: string) => {
+  try {
+    if (process.env.NODE_ENV === "development") return;
+    const twilioCreds = app.get("twilio");
+    const { accountSid, authToken, from } = twilioCreds;
+    const client = twilio(accountSid, authToken);
+    client.verify.v2.services("cdscds").verificationChecks.create({
+      to,
+      code,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const sendNotificationForCourseCompletion = async (
+  courseId: any,
+  userId: any
+) => {
+  try {
+    let completionDetails: any = {};
+    const coursePreviewDoc: any = await createCoursePreviewModel(app)
+      .findOne({ userId, courseId })
+      .populate({
+        path: "approvedCourse",
+      })
+      .populate({ path: "course", strictPopulate: false })
+      .populate("userId")
+      .lean();
+    if (!coursePreviewDoc) return;
+
+    const hasAssignment =
+      coursePreviewDoc.approvedCourse.assignments.length > 0;
+    const courseCompleted =
+      coursePreviewDoc.progressPercentage === 100 &&
+      coursePreviewDoc.completedAt;
+
+    if (courseCompleted) {
+      completionDetails.date = moment(coursePreviewDoc.completedAt).format(
+        "MM-DD-YYYY"
+      );
+    }
+
+    const category = await CategoriesModel(app)
+      .findOne({
+        _id: coursePreviewDoc?.userId?.location,
+      })
+      .lean();
+
+    if (!courseCompleted) return;
+
+    completionDetails = {
+      ...completionDetails,
+      firstName: coursePreviewDoc.userId.name ?? "",
+      lastName: coursePreviewDoc.userId.lastName ?? "",
+      mobileNo: coursePreviewDoc.userId.mobileNo,
+      courseName:
+        coursePreviewDoc?.approvedCourse?.certificateDetails?.title ??
+        coursePreviewDoc?.approvedCourse?.title,
+      instructorName:
+        coursePreviewDoc?.approvedCourse?.certificateDetails?.instructorName ??
+        "",
+      courseDetails:
+        coursePreviewDoc?.approvedCourse?.certificateDetails?.courseDetails ??
+        "",
+      courseDuration:
+        coursePreviewDoc?.approvedCourse?.certificateDetails?.courseDuration ??
+        "",
+      designationTitle:
+        coursePreviewDoc?.approvedCourse?.certificateDetails
+          ?.designationTitle ?? "",
+      designationSubTitle:
+        coursePreviewDoc?.approvedCourse?.certificateDetails
+          ?.designationSubTitle ?? "",
+      leftLogo: category?.certificateLogo?.objectUrl,
+      centerLogo: category?.certificateIcon?.objectUrl,
+      courseTitle: coursePreviewDoc?.approvedCourse?.title,
+    };
+
+    let imgFileResp: any, pdfFileResp: any;
+    let certificateDownload = "";
+    let subject = "";
+    let certificateLink = "";
+    if (hasAssignment) {
+      imgFileResp = await generateCertificate(completionDetails);
+      pdfFileResp = await generatePDF(imgFileResp.absolutePath);
+
+      console.log("file path ==== ", imgFileResp, pdfFileResp);
+      certificateLink = await saveFileToS3(pdfFileResp.absolutePath);
+      await createCoursePreviewModel(app).findByIdAndUpdate(
+        coursePreviewDoc._id,
+        {
+          certificateUrl: certificateLink,
+        }
+      );
+
+      subject = `Certificate for ${completionDetails.firstName} ${completionDetails.lastName} - ${completionDetails.courseName}`;
+
+      certificateDownload = `
+ <p>
+  You can download the HHA's Certificate of Completion here:
+</p>
+<a href="${certificateLink}">Download</a>
+    `;
+    } else {
+      subject = `Course completed by ${completionDetails.firstName} ${completionDetails.lastName} - ${completionDetails.courseName}`;
+    }
+
+    const messageData: any = {
+      "Legal Name": `${completionDetails.firstName} ${completionDetails.lastName}`,
+      Phone: completionDetails.mobileNo,
+      "I consent to my information being sent to X-Treme Care LLC and its subsidiaries for the purpose of employment documentation":
+        "checked",
+    };
+    const message = `
+    <p>
+This HHA has successfully completed the ${completionDetails.courseName} ${
+  certificateDownload
+    ? "and has earned a Certificate of Completion for his/her file"
+    : ""
+}. </p>
+<p>
+  The following information has been entered by the HHA following course completion:
+</p>
+<ol>
+
+${Object.keys(messageData)
+    .map((key: any) => {
+      return `<li> <div style="display: flex; flex-direction: column;">
+  <div style="font-weight: bold;">
+    ${key}:
+  </div>
+  <div style="margin-left: 8px">
+  ${messageData[key]}
+  </div>
+  </div>
+  </li>`;
+    })
+    .join("")}
+
+</ol>
+${certificateDownload}
+    `;
+
+    const attachments: any[] = [];
+    const to: string[] = [];
+
+    if (courseCompleted && imgFileResp) {
+      // attachments.push({
+      //   filename: "Certificate.png",
+      //   path: imgFileResp?.absolutePath,
+      // });
+
+      // for (const user of coursePreviewDoc) {
+      const userLocation: any = coursePreviewDoc?.userId?.location;
+
+      // Step 4: Find the location category from the categories collection
+      const category = await categoriesModel(app).findById(userLocation);
+
+      if (category?.hrEmails?.length) {
+        for (const email of category.hrEmails) {
+          if (!to.includes(email)) {
+            to.push(email);
+          }
+        }
+      }
+      // }
+
+      attachments.push({
+        filename: "Certificate.pdf",
+        path: pdfFileResp?.absolutePath,
+      });
+    }
+
+    await sendEmail({
+      to,
+      subject,
+      message,
+      attachments,
+    });
+
+    fs.unlinkSync(imgFileResp?.absolutePath);
+    fs.unlinkSync(pdfFileResp?.absolutePath);
+  } catch (e) {
+    console.log("e------", e);
+  }
+};
+
+const saveFileToS3 = async (filePath: string) => {
+  const fileStream = fs.createReadStream(filePath);
+  const fileKey =
+    "certificates/" + filePath.slice(filePath.lastIndexOf("/") + 1);
+  const params = {
+    Bucket: aws.s3BucketName,
+    Key: fileKey,
+    Body: fileStream,
+    // ACL: "public-read",
+  };
+  const url = `https://${aws.cloudFrontUrl}/${fileKey}`;
+  await s3.upload(params).promise();
+  return url;
+};
+
+export const uploadFileToS3 = async (fileDetails: any) => {
+  const { filePath, destS3Path } = fileDetails;
+  const fileStream = fs.createReadStream(filePath);
+  const params = {
+    Bucket: aws.s3BucketName,
+    Key: destS3Path,
+    Body: fileStream,
+    // ACL: "public-read",
+  };
+  const url = `https://${aws.cloudFrontUrl}/${destS3Path}`;
+  await s3.upload(params).promise();
+  return url;
+};
+
+export const copyS3File = async (sourceUrl: string, newFileName?: string) => {
+  const uid = newFileName || new mongoose.Types.ObjectId().toString();
+  const fileName = sourceUrl.substring(sourceUrl.lastIndexOf("/") + 1);
+  const fileExt = sourceUrl.substring(sourceUrl.lastIndexOf(".") + 1);
+  const newFileKey = `${uid}.${fileExt}`;
+  
+  const copyParams = {
+    Bucket: aws.s3BucketName,
+    CopySource: `/${aws.s3BucketName}/${fileName}`,
+    Key: newFileKey,
+    // ACL: "public-read",
+  };
+  
+  await s3.copyObject(copyParams).promise();
+  const copyObjectUrl = `https://${aws.cloudFrontUrl}/${newFileKey}`;
+  
+  return {
+    newFileKey,
+    newFileUrl: copyObjectUrl
+  };
+};

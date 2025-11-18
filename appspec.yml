@@ -1,0 +1,19 @@
+version: 0.0
+os: linux
+
+hooks:
+    ApplicationStart:
+        - location: /scripts/ApplicationStart.sh
+          timeout: 300
+          runas: pm2user
+
+    ValidateService:
+        - location: /scripts/ValidateService.sh
+          timeout: 300
+          runas: pm2user
+
+    BeforeAllowTraffic:
+        - location: /scripts/BeforeAllowTraffic.sh
+          timeout: 300
+          runas: pm2user
+        
