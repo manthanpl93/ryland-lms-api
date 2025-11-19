@@ -8,7 +8,7 @@ import upload from "./upload/upload.service";
 import enrolCourse from "./enrol-course/enrol-course.service";
 import coursePreview from "./course-preview/course-preview.service";
 import countries from "./countries/countries.service";
-import approvedCourses from "./approved-courses/approved-courses.service";
+import publishedCourses from "./published-courses/published-courses.service";
 import notifications from "./notifications/notifications.service";
 import categories from "./categories/categories.service";
 import userExport from "./user-export/user-export.service";
@@ -39,7 +39,7 @@ export default function (app: Application): void {
   app.configure(enrolCourse);
   app.configure(coursePreview);
   app.configure(countries);
-  app.configure(approvedCourses);
+  app.configure(publishedCourses);
   app.configure(notifications);
   app.configure(categories);
   app.configure(userExport);

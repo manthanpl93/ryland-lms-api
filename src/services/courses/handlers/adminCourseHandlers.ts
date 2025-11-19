@@ -1,7 +1,7 @@
 import { BadRequest } from "@feathersjs/errors";
 import { Application } from "../../../declarations";
 import createCoursesModel from "../../../models/courses.model";
-import createApprovedCoursesModel from "../../../models/approved-courses.model";
+import createPublishedCoursesModel from "../../../models/published-courses.model";
 import moment from "moment-timezone";
 import mongoose from "mongoose";
 import { analyzeDetailedChanges } from "../publish-lib";
@@ -219,7 +219,7 @@ const getPublishChanges = async (
   app: Application
 ): Promise<IPublishChangesResponse> => {
   try {
-    const approvedCoursesModel = createApprovedCoursesModel(app);
+    const publishedCoursesModel = createPublishedCoursesModel(app);
 
     // Fetch the main course
     const course: any = await createCoursesModel(app).findById(courseId).lean();
@@ -229,12 +229,12 @@ const getPublishChanges = async (
     }
 
     // Check if course has been published before
-    const approvedCourse: any = await approvedCoursesModel
+    const publishedCourse: any = await publishedCoursesModel
       .findOne({ mainCourse: courseId })
       .lean();
 
     // Case 1: Course not yet published
-    if (!approvedCourse) {
+    if (!publishedCourse) {
       return {
         coursePublished: false,
         hasChanges: false,
@@ -242,7 +242,7 @@ const getPublishChanges = async (
     }
 
     // Case 2: Course published - compare hashes
-    const hasChanges = course.courseHash !== approvedCourse.courseHash;
+    const hasChanges = course.courseHash !== publishedCourse.courseHash;
 
     if (!hasChanges) {
       // Case 3: No changes detected
@@ -255,7 +255,7 @@ const getPublishChanges = async (
     // Case 4: Changes detected - perform detailed analysis
     const changesByCategory = await analyzeDetailedChanges(
       course,
-      approvedCourse
+      publishedCourse
     );
 
     return {
@@ -355,7 +355,7 @@ const deleteCourse = async (
 ): Promise<AdminDeleteResponse> => {
   try {
     const coursesModel = createCoursesModel(app);
-    const approvedCoursesModel = createApprovedCoursesModel(app);
+    const publishedCoursesModel = createPublishedCoursesModel(app);
 
     const deletedCourse = await coursesModel
       .findByIdAndUpdate(
@@ -371,7 +371,7 @@ const deleteCourse = async (
         }
       )
       .lean();
-    await approvedCoursesModel.findOneAndUpdate(
+    await publishedCoursesModel.findOneAndUpdate(
       {
         mainCourse: deletedCourse?._id,
       },

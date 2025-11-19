@@ -1,7 +1,7 @@
 import { BadRequest } from "@feathersjs/errors";
 import { Application } from "../../../declarations";
 import createCoursesModel from "../../../models/courses.model";
-import createApprovedCoursesModel from "../../../models/approved-courses.model";
+import createPublishedCoursesModel from "../../../models/published-courses.model";
 import {
   AdminCourseParams,
   TeacherCourseParams,
@@ -27,7 +27,7 @@ export const checkCourseChanges = async (
   }
 
   try {
-    const approvedCoursesModel = createApprovedCoursesModel(app);
+    const publishedCoursesModel = createPublishedCoursesModel(app);
 
     // Fetch the main course with its hash
     const course: any = await createCoursesModel(app)
@@ -40,7 +40,7 @@ export const checkCourseChanges = async (
     }
 
     // Fetch the approved course to compare hashes
-    const approvedCourse: any = await approvedCoursesModel
+    const approvedCourse: any = await publishedCoursesModel
       .findOne({ mainCourse: courseId })
       .select("_id courseHash")
       .lean();

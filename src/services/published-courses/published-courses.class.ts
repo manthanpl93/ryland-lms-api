@@ -8,7 +8,7 @@ import { addCourseIdForVideoProcessing } from "../../processors";
 import createCoursesModel from "../../models/courses.model";
 const { aws } = configuration()();
 
-export class ApprovedCourses extends Service {
+export class PublishedCourses extends Service {
   app: Application;
   //eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(options: Partial<MongooseServiceOptions>, app: Application) {
@@ -33,16 +33,16 @@ export class ApprovedCourses extends Service {
   ): Promise<any> {
     try {
       // Verify if already course available or not
-      const approvedCourse: any = await this.Model.findOne({
+      const publishedCourse: any = await this.Model.findOne({
         mainCourse: course._id,
       });
 
       const payload = this.getCoursePayload(course);
 
       let updatedCourse;
-      if (approvedCourse) {
+      if (publishedCourse) {
         updatedCourse = await this.Model.findByIdAndUpdate(
-          approvedCourse._id,
+          publishedCourse._id,
           payload,
           {
             returnDocument: "after",
@@ -76,7 +76,7 @@ export class ApprovedCourses extends Service {
       }
 
       // Verify if already course available or not
-      const approvedCourse: any = await this.Model.findOne({
+      const publishedCourse: any = await this.Model.findOne({
         mainCourse: course._id,
       });
 
@@ -89,9 +89,9 @@ export class ApprovedCourses extends Service {
       const updatePayload = { ...payload, ...data };
 
       let updatedCourse;
-      if (approvedCourse) {
+      if (publishedCourse) {
         updatedCourse = await this.Model.findByIdAndUpdate(
-          approvedCourse._id,
+          publishedCourse._id,
           updatePayload,
           {
             returnDocument: "after",
@@ -141,8 +141,9 @@ export class ApprovedCourses extends Service {
       deleted: course?.deleted,
       last_status_changed_at: course?.last_status_changed_at,
       lastReleaseDate: course?.lastReleaseDate,
-      courseHash: course?.courseHash, // Add courseHash field
-      status: course?.status, // Add status field
+      courseHash: course?.courseHash,
+      status: course?.status,
+      classId: course?.classId,
       createdAt: course?.createdAt,
       updatedAt: course?.updatedAt,
     };
@@ -212,3 +213,4 @@ const convertVideos = async (course: any, Model: any) => {
     );
   }
 };
+

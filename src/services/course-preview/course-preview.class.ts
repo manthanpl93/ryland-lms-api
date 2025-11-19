@@ -1,7 +1,7 @@
 import { Service, MongooseServiceOptions } from "feathers-mongoose";
 import { Application } from "../../declarations";
 import { Id, NullableId, Paginated, Params } from "@feathersjs/feathers";
-import createApprovedCoursesModel from "../../models/approved-courses.model";
+import createPublishedCoursesModel from "../../models/published-courses.model";
 import coursePreviewModel from "../../models/course-preview.model";
 import { BadRequest } from "@feathersjs/errors";
 import { sendNotificationForCourseCompletion } from "../../utils/utilities";
@@ -70,7 +70,7 @@ export class CoursePreview extends Service {
         })
         .lean();
       if (coursePreview) {
-        const course = await createApprovedCoursesModel(this.app)
+        const course = await createPublishedCoursesModel(this.app)
           .findOne({ mainCourse: coursePreview.courseId })
           .lean();
         const courseOutline = course?.outline ? course?.outline : [];
@@ -246,7 +246,7 @@ export class CoursePreview extends Service {
     courseId: string,
   ): Promise<number> {
     let totalLessons = 0;
-    const course = await createApprovedCoursesModel(this.app).findOne({
+    const course = await createPublishedCoursesModel(this.app).findOne({
       mainCourse: courseId,
     });
     const courseOutline = course?.outline ? course.outline : [];
@@ -266,7 +266,7 @@ export class CoursePreview extends Service {
     query: any,
     data: any,
   ): Promise<void> {
-    const moduleExists = await createApprovedCoursesModel(this.app).exists({
+    const moduleExists = await createPublishedCoursesModel(this.app).exists({
       mainCourse: coursePreview.courseId,
       "outline._id": query?.itemId,
       "outline.category": "module",
@@ -300,7 +300,7 @@ export class CoursePreview extends Service {
     query: any,
     data: any,
   ): Promise<void> {
-    const lessonExists = await createApprovedCoursesModel(this.app).exists({
+    const lessonExists = await createPublishedCoursesModel(this.app).exists({
       $or: [
         {
           mainCourse: coursePreview.courseId,

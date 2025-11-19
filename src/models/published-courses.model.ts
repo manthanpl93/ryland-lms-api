@@ -1,4 +1,4 @@
-// approved-courses-model.ts - A mongoose model
+// published-courses-model.ts - A mongoose model
 //
 // See http://mongoosejs.com/docs/models.html
 // for more of what you can do here.
@@ -10,7 +10,7 @@ interface Lesson {
   category: "lesson";
   title: string;
   contentType: "media" | "text";
-  type: "pdf" | "video" | "content";
+  type: "pdf" | "video" | "content" | "quiz" | "powerpoint";
   resource?: any;
   content?: string;
   videoProcessingData?: any;
@@ -30,6 +30,22 @@ interface Lesson {
       allowRetakes: { type: boolean, default: true };
       passingPercentage: { type: number, default: 70, min: 0, max: 100 };
     };
+  };
+  metadata?: {
+    description: string;
+    duration: number;
+    isPreviewable: boolean;
+    requiredLesson: boolean;
+  };
+  scheduleEnabled?: boolean;
+  scheduleDate?: Date;
+  deadlineEnabled?: boolean;
+  deadlineDate?: Date;
+  deadlinePointsEnabled?: boolean;
+  deadlinePoints?: number;
+  quizRewards?: {
+    badge: string;
+    additionalPoints: number;
   };
 }
 
@@ -51,7 +67,7 @@ interface Courses {
 }
 
 export default function (app: Application): Model<Courses> {
-  const modelName = "approvedCourses";
+  const modelName = "publishedCourses";
   const mongooseClient: Mongoose = app.get("mongooseClient");
   const { Schema } = mongooseClient;
 
@@ -67,7 +83,7 @@ export default function (app: Application): Model<Courses> {
     },
     type: {
       type: String,
-      enum: ["pdf", "video", "content", "quiz"],
+      enum: ["pdf", "video", "content", "quiz", "powerpoint"],
       required: true,
     },
     resource: {
@@ -101,6 +117,22 @@ export default function (app: Application): Model<Courses> {
       enum: ["lesson"],
       default: "lesson",
     },
+    metadata: {
+      description: { type: String, default: "" },
+      duration: { type: Number, default: 0 },
+      isPreviewable: { type: Boolean, default: true },
+      requiredLesson: { type: Boolean, default: false }
+    },
+    scheduleEnabled: { type: Boolean, default: false },
+    scheduleDate: { type: Date },
+    deadlineEnabled: { type: Boolean, default: false },
+    deadlineDate: { type: Date },
+    deadlinePointsEnabled: { type: Boolean, default: false },
+    deadlinePoints: { type: Number, min: 0 },
+    quizRewards: {
+      badge: { type: String, enum: ["none", "quiz-master", "outstanding-learner"] },
+      additionalPoints: { type: Number, min: 0 }
+    },
   });
 
   const outlineItemSchema = new Schema({
@@ -122,7 +154,7 @@ export default function (app: Application): Model<Courses> {
     },
     type: {
       type: String,
-      enum: ["pdf", "video", "content", "quiz"],
+      enum: ["pdf", "video", "content", "quiz", "powerpoint"],
     },
     quizData: {
       title: { type: String },
@@ -150,9 +182,25 @@ export default function (app: Application): Model<Courses> {
     videoProcessingData: {
       type: Object,
     },
+    metadata: {
+      description: { type: String, default: "" },
+      duration: { type: Number, default: 0 },
+      isPreviewable: { type: Boolean, default: true },
+      requiredLesson: { type: Boolean, default: false }
+    },
+    scheduleEnabled: { type: Boolean, default: false },
+    scheduleDate: { type: Date },
+    deadlineEnabled: { type: Boolean, default: false },
+    deadlineDate: { type: Date },
+    deadlinePointsEnabled: { type: Boolean, default: false },
+    deadlinePoints: { type: Number, min: 0 },
+    quizRewards: {
+      badge: { type: String, enum: ["none", "quiz-master", "outstanding-learner"] },
+      additionalPoints: { type: Number, min: 0 }
+    },
   });
 
-  const approvedCourseSchema = new Schema(
+  const publishedCourseSchema = new Schema(
     {
       mainCourse: {
         type: Schema.Types.ObjectId,
@@ -160,19 +208,40 @@ export default function (app: Application): Model<Courses> {
         ref: "courses",
       },
       title: { type: String },
+      category: { type: String },
       courseDescription: { type: String },
+      difficultyLevel: { 
+        type: String, 
+        enum: ["Beginner", "Intermediate", "Advanced"], 
+        required: false 
+      },
       learnings: { type: [String] },
       courseImage: { type: Object },
       authors: { type: [Schema.Types.ObjectId], ref: "users" },
       owner: { type: Schema.Types.ObjectId, required: true, ref: "users" },
       outline: { type: [outlineItemSchema], default: [] },
       certificateDetails: { type: Map },
+      accuracy: { type: String },
+      status: { 
+        type: String, 
+        enum: ["draft", "review", "rejected", "approved"], 
+        required: false 
+      },
       deleted: { type: Boolean },
-      // NEW FIELD for publish feature
+      last_status_changed_at: { type: Date },
+      lastReleaseDate: { 
+        type: Date, 
+        required: false 
+      },
       courseHash: { 
         type: String, 
         required: false
       },
+      classId: {
+        type: Schema.Types.ObjectId,
+        ref: "classes",
+        required: false
+      }
     },
     {
       strict: false,
@@ -185,5 +254,6 @@ export default function (app: Application): Model<Courses> {
   if (mongooseClient.modelNames().includes(modelName)) {
     (mongooseClient as any).deleteModel(modelName);
   }
-  return mongooseClient.model<any>(modelName, approvedCourseSchema);
+  return mongooseClient.model<any>(modelName, publishedCourseSchema);
 }
+

@@ -1,7 +1,7 @@
 import { Service, MongooseServiceOptions } from "feathers-mongoose";
 import { Application } from "../../../declarations";
 import createCoursesModel from "../../../models/courses.model";
-import createApprovedCoursesModel from "../../../models/approved-courses.model";
+import createPublishedCoursesModel from "../../../models/published-courses.model";
 import { BadRequest } from "@feathersjs/errors";
 import {
   updateCourseWithHash,
@@ -138,8 +138,8 @@ export class AuthorCourses extends Service {
       console.log("courses", courses);
       
       // Get video processing status for approved courses
-      const approvedCoursesModel = createApprovedCoursesModel(this.app);
-      const approvedCourses: any[] = await approvedCoursesModel.find({
+      const publishedCoursesModel = createPublishedCoursesModel(this.app);
+      const approvedCourses: any[] = await publishedCoursesModel.find({
         mainCourse: { $in: courses.map((el: any) => el._id) },
         $or: [
           { videoProcessing: { $exists: false } },
@@ -309,8 +309,8 @@ export class AuthorCourses extends Service {
 
     // Get video processing status for approved courses
     if (courses.length > 0) {
-      const approvedCoursesModel = createApprovedCoursesModel(this.app);
-      const approvedCourses: any[] = await approvedCoursesModel.find({
+      const publishedCoursesModel = createPublishedCoursesModel(this.app);
+      const approvedCourses: any[] = await publishedCoursesModel.find({
         mainCourse: { $in: courses.map((el: any) => el._id) },
         $or: [
           { videoProcessing: { $exists: false } },

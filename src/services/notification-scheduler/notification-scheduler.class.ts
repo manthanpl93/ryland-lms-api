@@ -2,7 +2,7 @@ import { Service, MongooseServiceOptions } from "feathers-mongoose";
 import { Application } from "../../declarations";
 import createApplication from "@feathersjs/feathers";
 import createScheduledNotificationLogsModel from "../../models/scheduled-notification-logs.model";
-import createApprovedCoursesModel from "../../models/approved-courses.model";
+import createPublishedCoursesModel from "../../models/published-courses.model";
 import {
   addNewNotificationSchedule,
   removeScheduleOfNotification,
@@ -208,7 +208,7 @@ export class NotificationScheduler extends Service {
       }
     }
 
-    const courses = await createApprovedCoursesModel(app)
+    const courses = await createPublishedCoursesModel(app)
       .find({})
       .select("mainCourse title certificateDetails")
       .lean();
@@ -275,7 +275,7 @@ export class NotificationScheduler extends Service {
 
     if (!log) throw new NotFound("Log not found!");
 
-    const course: any = await createApprovedCoursesModel(app)
+    const course: any = await createPublishedCoursesModel(app)
       .findOne({ mainCourse: log.courseId })
       .select("mainCourse title certificateDetails")
       .lean();

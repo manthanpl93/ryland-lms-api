@@ -1,6 +1,6 @@
 import createUsersModel from "../../models/users.model";
 import createNotificationSchedulesModel from "../../models/notification-scheduler.model";
-import createApprovedCoursesModel from "../../models/approved-courses.model";
+import createPublishedCoursesModel from "../../models/published-courses.model";
 import createCoursePreviewModel from "../../models/course-preview.model";
 import createScheduledNotificationLogsModel from "../../models/scheduled-notification-logs.model";
 import app from "../../app";
@@ -20,8 +20,8 @@ export const getNotificationInformation = async (notificationId: any) => {
 };
 
 export const getCourseDetails = async (courseId: any) => {
-  const ApprovedCoursesModel = createApprovedCoursesModel(app);
-  return ApprovedCoursesModel.findOne({ mainCourse: courseId })
+  const PublishedCoursesModel = createPublishedCoursesModel(app);
+  return PublishedCoursesModel.findOne({ mainCourse: courseId })
     .select("_id title certificateDetails assignments")
     .lean();
 };

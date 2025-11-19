@@ -1,7 +1,7 @@
 import { tmpdir } from "os";
 import app from "../app";
 import createCoursesModel from "../models/courses.model";
-import createApprovedCoursesModel from "../models/approved-courses.model";
+import createPublishedCoursesModel from "../models/published-courses.model";
 import { generateRandomString } from "../utils/utilities";
 import fs from "fs";
 import axios from "axios";
@@ -41,8 +41,8 @@ subscriber.subscribe(VIDEO_PROCESSED_TOPIC);
 export const processVideosOfCourse = async (courseId: string) => {
   console.log("----- read from db ");
   const coursesModel = createCoursesModel(app);
-  const approvedCoursesModel = createApprovedCoursesModel(app);
-  const approvedCourse = await approvedCoursesModel
+  const publishedCoursesModel = createPublishedCoursesModel(app);
+  const approvedCourse = await publishedCoursesModel
     .findOne({
       mainCourse: courseId,
     })
@@ -50,7 +50,7 @@ export const processVideosOfCourse = async (courseId: string) => {
   if (!approvedCourse) return;
 
   try {
-    await approvedCoursesModel.findByIdAndUpdate(approvedCourse._id, {
+    await publishedCoursesModel.findByIdAndUpdate(approvedCourse._id, {
       videoProcessing: "started",
     });
 
@@ -148,7 +148,7 @@ export const processVideosOfCourse = async (courseId: string) => {
             ? `outline.${outlineIdx}`
             : `outline.${outlineIdx}.lessons.${lessonIdx}`;
             
-          const updated = await createApprovedCoursesModel(app)
+          const updated = await createPublishedCoursesModel(app)
             .findByIdAndUpdate(
               approvedCourse._id,
               {
@@ -191,7 +191,7 @@ export const processVideosOfCourse = async (courseId: string) => {
       }
     }
 
-    await approvedCoursesModel.findByIdAndUpdate(
+    await publishedCoursesModel.findByIdAndUpdate(
       approvedCourse._id,
       { outline, videoProcessing: "finished" },
       {
@@ -200,7 +200,7 @@ export const processVideosOfCourse = async (courseId: string) => {
     );
   } catch (e) {
     console.log("error while processing approved course", e);
-    await approvedCoursesModel.findByIdAndUpdate(
+    await publishedCoursesModel.findByIdAndUpdate(
       approvedCourse._id,
       { videoProcessing: "error" },
       {

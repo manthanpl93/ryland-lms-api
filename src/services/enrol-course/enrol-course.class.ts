@@ -3,7 +3,7 @@ import { Application } from "../../declarations";
 import { Params } from "@feathersjs/feathers";
 import coursePreviewModel from "../../models/course-preview.model";
 import coursesModel from "../../models/courses.model";
-import createApprovedCoursesModel from "../../models/approved-courses.model";
+import createPublishedCoursesModel from "../../models/published-courses.model";
 import { BadRequest } from "@feathersjs/errors";
 import usersModel from "../../models/users.model";
 import { triggerNotifications } from "../../utils/notification-manager/action-gateway";
@@ -25,7 +25,7 @@ export class EnrolCourse extends Service {
     try {
       const user = params?.user;
       const { courseId = "" } = data;
-      const course = await createApprovedCoursesModel(this.app)
+      const course = await createPublishedCoursesModel(this.app)
         .findOne({
           mainCourse: courseId,
         })

@@ -1,6 +1,6 @@
 import { BadRequest } from "@feathersjs/errors";
 import { Application } from "../../../declarations";
-import createApprovedCoursesModel from "../../../models/approved-courses.model";
+import createPublishedCoursesModel from "../../../models/published-courses.model";
 import {
   StudentCourseParams,
   StudentCourseData,
@@ -18,8 +18,8 @@ export const studentGet = async (
 ): Promise<any> => {
   try {
     // Students can only access approved courses
-    const approvedCoursesModel = createApprovedCoursesModel(app);
-    const course = await approvedCoursesModel.findById(id);
+    const publishedCoursesModel = createPublishedCoursesModel(app);
+    const course = await publishedCoursesModel.findById(id);
     
     if (!course) {
       throw new BadRequest("No course found");
@@ -81,7 +81,7 @@ const getStudentCourses = async (
 ): Promise<StudentCourseFindResponse> => {
   const query = params?.query || {};
   const { skip = 0, limit = 1000, searchText } = query;
-  const approvedCoursesModel = createApprovedCoursesModel(app);
+  const publishedCoursesModel = createPublishedCoursesModel(app);
 
   const searchQuery: any = {
     $or: [{ deleted: false }, { deleted: { $exists: false } }],
@@ -93,13 +93,13 @@ const getStudentCourses = async (
     searchQuery.title = { $regex: searchRgx, $options: "i" };
   }
 
-  const data = await approvedCoursesModel
+  const data = await publishedCoursesModel
     .find(searchQuery)
     .sort({ _id: -1 })
     .skip(Number(skip))
     .limit(Number(limit));
 
-  const total = await approvedCoursesModel.countDocuments(searchQuery);
+  const total = await publishedCoursesModel.countDocuments(searchQuery);
 
   return {
     data,
