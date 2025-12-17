@@ -31,9 +31,21 @@ export interface StudentCourseData {
   [key: string]: any;
 }
 
+// Student course item in list
+export interface StudentCourseItem {
+  courseId: ObjectId | string;
+  image: {
+    objectUrl?: string;
+    fileName?: string;
+    [key: string]: any;
+  };
+  title: string;
+  progress: number;
+}
+
 // Student course find response
 export interface StudentCourseFindResponse {
-  data: any[];
+  data: StudentCourseItem[];
   total: number;
 }
 

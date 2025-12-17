@@ -1,7 +1,7 @@
 import { Params } from "@feathersjs/feathers";
 import { Application } from "../../declarations";
 import coursesModel from "../../models/courses.model";
-import coursePreviewModel from "../../models/course-preview.model";
+import studentProgressModel from "../../models/student-progress.model";
 import { getLastWeekCourseCompletionReport } from "../../scheduler/weeklyReport";
 
 export class CoursesReport {
@@ -44,7 +44,7 @@ export class CoursesReport {
 
       for (const course of courses) {
         course["totalParticipants"] = course?.enrolledCourses?.length;
-        course["totalCompleted"] = await coursePreviewModel(this.app).count({
+        course["totalCompleted"] = await studentProgressModel(this.app).count({
           courseId: course?._id,
           completedAt: { $exists: true },
         });
@@ -66,9 +66,9 @@ export class CoursesWeeklyReport {
   constructor(app: Application) {
     this.app = app;
   }
-  async find(params: Params): Promise<any> {
+  async find(): Promise<any> {
     try {
-      const res: any = await getLastWeekCourseCompletionReport(true);
+      await getLastWeekCourseCompletionReport(true);
       return { message: "Weekly report sent to the HR emails" };
     } catch (error) {
       throw error;

@@ -1,6 +1,8 @@
 import { BadRequest } from "@feathersjs/errors";
 import { Application } from "../../../declarations";
 import createPublishedCoursesModel from "../../../models/published-courses.model";
+import createClassEnrollmentsModel from "../../../models/class-enrollments.model";
+import createStudentProgressModel from "../../../models/student-progress.model";
 import {
   StudentCourseParams,
   StudentCourseData,
@@ -73,7 +75,8 @@ export const studentCreate = async (
 // ============ Helper Functions ============
 
 /**
- * Get student courses based on location and job titles
+ * Get student courses filtered by their enrolled class
+ * Students can only see courses from the class they're enrolled in
  */
 const getStudentCourses = async (
   params: StudentCourseParams,
@@ -81,10 +84,35 @@ const getStudentCourses = async (
 ): Promise<StudentCourseFindResponse> => {
   const query = params?.query || {};
   const { skip = 0, limit = 1000, searchText } = query;
+  const studentId = params?.user?._id;
+
+  if (!studentId) {
+    throw new BadRequest("Student authentication required");
+  }
+
+  // Get student's enrolled class
+  const classEnrollmentsModel = createClassEnrollmentsModel(app);
+  const enrollment = await classEnrollmentsModel
+    .findOne({
+      studentId,
+      status: "Active",
+    })
+    .lean();
+
+  // If student is not enrolled in any class, return empty result
+  if (!enrollment) {
+    return {
+      data: [],
+      total: 0,
+    };
+  }
+
   const publishedCoursesModel = createPublishedCoursesModel(app);
 
+  // Build search query
   const searchQuery: any = {
     $or: [{ deleted: false }, { deleted: { $exists: false } }],
+    classId: enrollment.classId, // Filter by student's enrolled class
   };
 
   if (searchText) {
@@ -93,13 +121,40 @@ const getStudentCourses = async (
     searchQuery.title = { $regex: searchRgx, $options: "i" };
   }
 
-  const data = await publishedCoursesModel
+  const courses = await publishedCoursesModel
     .find(searchQuery)
+    .select("mainCourse title courseImage")
     .sort({ _id: -1 })
     .skip(Number(skip))
-    .limit(Number(limit));
+    .limit(Number(limit))
+    .lean();
 
   const total = await publishedCoursesModel.countDocuments(searchQuery);
+
+  // Get student progress for these courses
+  const studentProgressModel = createStudentProgressModel(app);
+  const courseIds = courses.map((c: any) => c.mainCourse);
+  
+  const progressData = await studentProgressModel
+    .find({
+      userId: studentId,
+      courseId: { $in: courseIds }
+    })
+    .select("courseId progressPercentage")
+    .lean();
+
+  // Create a map for quick lookup
+  const progressMap = new Map(
+    progressData.map((p: any) => [p.courseId.toString(), p.progressPercentage || 0])
+  );
+
+  // Format the response with only required fields
+  const data = courses.map((course: any) => ({
+    courseId: course.mainCourse,
+    image: course.courseImage,
+    title: course.title,
+    progress: progressMap.get(course.mainCourse.toString()) || 0
+  }));
 
   return {
     data,

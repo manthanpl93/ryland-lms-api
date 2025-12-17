@@ -61,7 +61,7 @@ app.configure(configuration());
 app.use(
   helmet({
     contentSecurityPolicy: false,
-  }),
+  })
 );
 app.use(cors());
 app.use(compress());
@@ -83,15 +83,23 @@ app.configure(authentication);
 console.log("🔧 About to configure socket.io...");
 app.configure(
   socketio({ maxHttpBufferSize: 5 * 1e9 }, function (io) {
-    console.log("🚀 Socket.io server configured and listening for connections...");
+    console.log(
+      "🚀 Socket.io server configured and listening for connections..."
+    );
     io.use(async function (socket: CustomSocket, next) {
       try {
         console.log("🔐 Socket authentication attempt...");
         console.log("   📍 Socket ID:", socket.id);
-        console.log("   🌐 Handshake query:", JSON.stringify(socket?.handshake?.query, null, 2));
-        console.log("   🎫 Token received:", socket?.handshake?.query?.token ? "Yes" : "No");
+        console.log(
+          "   🌐 Handshake query:",
+          JSON.stringify(socket?.handshake?.query, null, 2)
+        );
+        console.log(
+          "   🎫 Token received:",
+          socket?.handshake?.query?.token ? "Yes" : "No"
+        );
         console.log("   🔍 Raw token value:", socket?.handshake?.query?.token);
-        
+
         if (!socket?.handshake?.query?.token) {
           console.log("❌ No token provided - rejecting connection");
           return next(new Error("Authentication token required"));
@@ -99,48 +107,51 @@ app.configure(
 
         console.log("🔍 Verifying access token...");
         console.log("   🎯 Calling authentication service...");
-        
+
         let result;
         try {
           result = await app
             .service("authentication")
             .verifyAccessToken(socket?.handshake?.query?.token);
-          
+
           console.log("   📋 Token verification result:", {
             success: !!result,
             hasSub: !!result?.sub,
             sub: result?.sub || "None",
             resultType: typeof result,
-            resultKeys: result ? Object.keys(result) : "No result"
+            resultKeys: result ? Object.keys(result) : "No result",
           });
         } catch (authError: any) {
           console.error("   ❌ Authentication service error:", authError);
           console.error("   🔍 Auth error details:", {
             message: authError?.message,
             name: authError?.name,
-            stack: authError?.stack
+            stack: authError?.stack,
           });
           throw authError;
         }
-        
+
         if (!result || !result.sub) {
           console.log("❌ Invalid token - rejecting connection");
           return next(new Error("Invalid authentication token"));
         }
-        
+
         console.log("👤 Retrieving user from database...");
         const user = await app.service("users").get(result.sub);
         if (!user) {
           console.log("❌ User not found - rejecting connection");
           return next(new Error("User not found"));
         }
-        
+
         console.log("   ✅ User retrieved successfully");
-        
-        console.log("✅ Socket authenticated successfully for user:", user.email);
+
+        console.log(
+          "✅ Socket authenticated successfully for user:",
+          user.email
+        );
         console.log("   👤 User ID:", user._id);
         console.log("   📧 Email:", user.email);
-        
+
         socket.handshake.query.user = user;
         next();
       } catch (e: any) {
@@ -148,34 +159,44 @@ app.configure(
         console.error("   🔍 Error details:", {
           message: e?.message || "Unknown error",
           name: e?.name || "Unknown",
-          stack: e?.stack || "No stack trace"
+          stack: e?.stack || "No stack trace",
         });
-        return next(new Error("Authentication failed: " + (e?.message || "Unknown error")));
+        return next(
+          new Error("Authentication failed: " + (e?.message || "Unknown error"))
+        );
       }
     });
 
     io.on("connection", function (socket: CustomSocket) {
       console.log("🔌 New socket connection established");
       console.log("   📍 Socket ID:", socket.id);
-      console.log("   🌐 Handshake query:", JSON.stringify(socket?.handshake?.query, null, 2));
-      console.log("   👤 User:", socket?.handshake?.query?.user ? "Authenticated" : "Unauthenticated");
-      
+      console.log(
+        "   🌐 Handshake query:",
+        JSON.stringify(socket?.handshake?.query, null, 2)
+      );
+      console.log(
+        "   👤 User:",
+        socket?.handshake?.query?.user ? "Authenticated" : "Unauthenticated"
+      );
+
       if (socket?.handshake?.query?.user) {
         const user = socket.handshake.query.user;
         console.log("   ✅ Authenticated user details:");
         console.log("      🆔 User ID:", user._id);
         console.log("      📧 Email:", user.email);
-        
+
         const socketId = socket.id;
         const userId = user._id as string;
-        
+
         setSocketById(socketId, socket);
         addSocketToUser(userId, socket);
         initializeEvents(socket, io, app);
-        
+
         console.log("   🎯 Socket registered and events initialized");
       } else {
-        console.log("   ⚠️ Unauthenticated socket - checking for worker connection...");
+        console.log(
+          "   ⚠️ Unauthenticated socket - checking for worker connection..."
+        );
         socket.on("workerConnectionRequest", (data: any) => {
           const workerToken = app.get("workerSocketToken");
           const { token } = data;
@@ -190,13 +211,24 @@ app.configure(
         });
       }
     });
-  }),
+  })
 );
 
 // Set up our services (see `services/index.ts`)
 app.configure(services);
 // Set up event channels (see channels.ts)
 app.configure(channels);
+
+// Initialize chat socket server
+console.log("🚀 Initializing chat socket server...");
+const initializeChatSocket = require("./socket/chatSocket");
+try {
+  const chatIo = initializeChatSocket(app);
+  app.set("chatIo", chatIo);
+  console.log("✅ Chat socket server initialized successfully");
+} catch (error: any) {
+  console.error("❌ Failed to initialize chat socket server:", error);
+}
 
 // The error handler must be registered before any other error middleware and after all controllers
 // app.use(Sentry.Handlers.errorHandler());

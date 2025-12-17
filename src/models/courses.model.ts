@@ -262,7 +262,7 @@ export default function (app: Application): Model<Courses> {
   coursesSchema.index({ classId: 1 });
   
   coursesSchema.virtual("enrolledCourses", {
-    ref: "CoursePreview",
+    ref: "studentProgress",
     localField: "_id",
     foreignField: "courseId",
   });

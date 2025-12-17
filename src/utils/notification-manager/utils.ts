@@ -1,7 +1,7 @@
 import createUsersModel from "../../models/users.model";
 import createNotificationSchedulesModel from "../../models/notification-scheduler.model";
 import createPublishedCoursesModel from "../../models/published-courses.model";
-import createCoursePreviewModel from "../../models/course-preview.model";
+import studentProgressModel from "../../models/student-progress.model";
 import createScheduledNotificationLogsModel from "../../models/scheduled-notification-logs.model";
 import app from "../../app";
 import fs from "fs";
@@ -30,16 +30,16 @@ export const isStudentCompletedCourse = async (
   studentId: any,
   courseId: any,
 ) => {
-  const preview = await createCoursePreviewModel(app)
+  const progress = await studentProgressModel(app)
     .findOne({
       courseId,
       userId: studentId,
     })
     .select("completedAt progressPercentage")
     .lean();
-  if (!preview) return false;
+  if (!progress) return false;
 
-  return !!(preview.completedAt && preview.progressPercentage >= 100);
+  return !!(progress.completedAt && progress.progressPercentage >= 100);
 };
 
 export const generateMessageContent = (params: any) => {
@@ -81,14 +81,14 @@ export const generateMessageContent = (params: any) => {
 
 export const getCertificateUrl = async (params: any) => {
   const { studentId, courseId } = params;
-  const preview = await createCoursePreviewModel(app)
+  const progress = await studentProgressModel(app)
     .findOne({
       userId: studentId,
       courseId,
     })
     .select("certificateUrl")
     .lean();
-  return preview?.certificateUrl;
+  return progress?.certificateUrl;
 };
 
 export const downloadAttachments = async (urls: any = [], requestId: any) => {
@@ -132,9 +132,7 @@ export const removeAttachments = (downloadedAttachments: any) => {
 };
 
 export const getStudentCompletionStatusForCourse = async (courseId: any) => {
-  const CoursePreviewModel = createCoursePreviewModel(app);
-
-  const coursePreviewRecords = await CoursePreviewModel.find({
+  const studentProgressRecords = await studentProgressModel(app).find({
     courseId,
   })
     .select("userId progressPercentage completedAt certificateUrl")
@@ -144,10 +142,10 @@ export const getStudentCompletionStatusForCourse = async (courseId: any) => {
     completed: [],
     notCompleted: [],
   };
-  completionStatus.completed = coursePreviewRecords
+  completionStatus.completed = studentProgressRecords
     .filter((r: any) => r.progressPercentage >= 100 && r.completedAt)
     .map((r: any) => r.userId.toString());
-  completionStatus.notCompleted = coursePreviewRecords
+  completionStatus.notCompleted = studentProgressRecords
     .filter(
       (r: any) => !completionStatus.completed.includes(r.userId.toString()),
     )

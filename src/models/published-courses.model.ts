@@ -257,3 +257,7 @@ export default function (app: Application): Model<Courses> {
   return mongooseClient.model<any>(modelName, publishedCourseSchema);
 }
 
+
+
+
+

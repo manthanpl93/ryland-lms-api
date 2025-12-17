@@ -2,7 +2,8 @@ import app from "../app";
 import twilio from "twilio";
 import configuration from "@feathersjs/configuration";
 const { countryCode = "+1", API_URL, aws } = configuration()();
-import createCoursePreviewModel from "../models/course-preview.model";
+import studentProgressModel from "../models/student-progress.model";
+import createPublishedCoursesModel from "../models/published-courses.model";
 import generateCertificate from "./certificate-generator";
 import { generatePDF } from "./pdf-generator";
 import moment from "moment-timezone";
@@ -12,6 +13,7 @@ import fs from "fs";
 import mongoose from "mongoose";
 import CategoriesModel from "../models/categories.model";
 import categoriesModel from "../models/categories.model";
+import usersModel from "../models/users.model";
 
 AWS.config.update({ region: aws.s3BucketRegion });
 const s3 = new AWS.S3();
@@ -84,31 +86,39 @@ export const sendNotificationForCourseCompletion = async (
 ) => {
   try {
     let completionDetails: any = {};
-    const coursePreviewDoc: any = await createCoursePreviewModel(app)
+    
+    // Fetch student progress
+    const studentProgress: any = await studentProgressModel(app)
       .findOne({ userId, courseId })
-      .populate({
-        path: "approvedCourse",
-      })
-      .populate({ path: "course", strictPopulate: false })
-      .populate("userId")
       .lean();
-    if (!coursePreviewDoc) return;
+    
+    if (!studentProgress) return;
 
-    const hasAssignment =
-      coursePreviewDoc.approvedCourse.assignments.length > 0;
+    // Fetch published course
+    const publishedCourse: any = await createPublishedCoursesModel(app)
+      .findOne({ mainCourse: courseId })
+      .lean();
+    
+    if (!publishedCourse) return;
+
+    // Fetch user details
+    const user: any = await usersModel(app).findById(userId).lean();
+    if (!user) return;
+
+    const hasAssignment = publishedCourse.assignments?.length > 0;
     const courseCompleted =
-      coursePreviewDoc.progressPercentage === 100 &&
-      coursePreviewDoc.completedAt;
+      studentProgress.progressPercentage === 100 &&
+      studentProgress.completedAt;
 
     if (courseCompleted) {
-      completionDetails.date = moment(coursePreviewDoc.completedAt).format(
+      completionDetails.date = moment(studentProgress.completedAt).format(
         "MM-DD-YYYY"
       );
     }
 
     const category = await CategoriesModel(app)
       .findOne({
-        _id: coursePreviewDoc?.userId?.location,
+        _id: user?.location,
       })
       .lean();
 
@@ -116,30 +126,25 @@ export const sendNotificationForCourseCompletion = async (
 
     completionDetails = {
       ...completionDetails,
-      firstName: coursePreviewDoc.userId.name ?? "",
-      lastName: coursePreviewDoc.userId.lastName ?? "",
-      mobileNo: coursePreviewDoc.userId.mobileNo,
+      firstName: user.name ?? "",
+      lastName: user.lastName ?? "",
+      mobileNo: user.mobileNo,
       courseName:
-        coursePreviewDoc?.approvedCourse?.certificateDetails?.title ??
-        coursePreviewDoc?.approvedCourse?.title,
+        publishedCourse?.certificateDetails?.title ??
+        publishedCourse?.title,
       instructorName:
-        coursePreviewDoc?.approvedCourse?.certificateDetails?.instructorName ??
-        "",
+        publishedCourse?.certificateDetails?.instructorName ?? "",
       courseDetails:
-        coursePreviewDoc?.approvedCourse?.certificateDetails?.courseDetails ??
-        "",
+        publishedCourse?.certificateDetails?.courseDetails ?? "",
       courseDuration:
-        coursePreviewDoc?.approvedCourse?.certificateDetails?.courseDuration ??
-        "",
+        publishedCourse?.certificateDetails?.courseDuration ?? "",
       designationTitle:
-        coursePreviewDoc?.approvedCourse?.certificateDetails
-          ?.designationTitle ?? "",
+        publishedCourse?.certificateDetails?.designationTitle ?? "",
       designationSubTitle:
-        coursePreviewDoc?.approvedCourse?.certificateDetails
-          ?.designationSubTitle ?? "",
+        publishedCourse?.certificateDetails?.designationSubTitle ?? "",
       leftLogo: category?.certificateLogo?.objectUrl,
       centerLogo: category?.certificateIcon?.objectUrl,
-      courseTitle: coursePreviewDoc?.approvedCourse?.title,
+      courseTitle: publishedCourse?.title,
     };
 
     let imgFileResp: any, pdfFileResp: any;
@@ -152,8 +157,10 @@ export const sendNotificationForCourseCompletion = async (
 
       console.log("file path ==== ", imgFileResp, pdfFileResp);
       certificateLink = await saveFileToS3(pdfFileResp.absolutePath);
-      await createCoursePreviewModel(app).findByIdAndUpdate(
-        coursePreviewDoc._id,
+      
+      // Update student progress with certificate URL
+      await studentProgressModel(app).findByIdAndUpdate(
+        studentProgress._id,
         {
           certificateUrl: certificateLink,
         }
@@ -211,15 +218,9 @@ ${certificateDownload}
     const to: string[] = [];
 
     if (courseCompleted && imgFileResp) {
-      // attachments.push({
-      //   filename: "Certificate.png",
-      //   path: imgFileResp?.absolutePath,
-      // });
+      const userLocation: any = user?.location;
 
-      // for (const user of coursePreviewDoc) {
-      const userLocation: any = coursePreviewDoc?.userId?.location;
-
-      // Step 4: Find the location category from the categories collection
+      // Find the location category from the categories collection
       const category = await categoriesModel(app).findById(userLocation);
 
       if (category?.hrEmails?.length) {
@@ -229,7 +230,6 @@ ${certificateDownload}
           }
         }
       }
-      // }
 
       attachments.push({
         filename: "Certificate.pdf",
