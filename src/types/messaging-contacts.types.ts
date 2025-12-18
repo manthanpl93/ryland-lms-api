@@ -7,7 +7,6 @@ export interface Contact {
   lastName: string;
   email: string;
   role: "student" | "teacher" | "admin";
-  avatar?: string;
   school?: string;
   conversationId?: string | null;
 }

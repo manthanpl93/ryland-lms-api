@@ -43,8 +43,8 @@ export class Messages extends Service {
 
     const messages = await this.Model.find(query)
       .sort({ createdAt: -1 })
-      .populate("senderId", "firstName lastName avatar email")
-      .populate("recipientId", "firstName lastName avatar email")
+      .populate("senderId", "firstName lastName email")
+      .populate("recipientId", "firstName lastName email")
       .limit(params?.query?.$limit || 50)
       .skip(params?.query?.$skip || 0);
 
@@ -151,7 +151,7 @@ export class Messages extends Service {
 
     return await this.Model.findByIdAndUpdate(id, update, {
       new: true,
-    }).populate("senderId recipientId", "firstName lastName avatar email");
+    }).populate("senderId recipientId", "firstName lastName email");
   }
 
   async remove(id: string, params?: Params): Promise<any> {

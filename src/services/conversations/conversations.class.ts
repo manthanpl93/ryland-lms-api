@@ -29,7 +29,7 @@ export class Conversations extends Service {
     // Get conversations sorted by recent activity
     const conversations = await this.Model.find(query)
       .sort({ lastMessageAt: -1 })
-      .populate("participants", "firstName lastName avatar email")
+      .populate("participants", "firstName lastName email")
       .limit(params?.query?.$limit || 50)
       .skip(params?.query?.$skip || 0);
 
@@ -125,12 +125,12 @@ export class Conversations extends Service {
         id,
         { $set: update },
         { new: true }
-      ).populate("participants", "firstName lastName avatar email");
+      ).populate("participants", "firstName lastName email");
     }
 
     return await this.Model.findByIdAndUpdate(id, data, { new: true }).populate(
       "participants",
-      "firstName lastName avatar email"
+      "firstName lastName email"
     );
   }
 

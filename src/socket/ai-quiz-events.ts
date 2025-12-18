@@ -14,10 +14,6 @@ import {
 function registerAIQuizEvents(socket: any, app: any) {
   const queueManager = getQueueManager(app);
   const aiQuizSessionsModel = createAIQuizSessionsModel(app);
-  
-  console.log(`🔌 AI Quiz Events registered for socket: ${socket.id}`);
-  console.log(`👤 User: ${socket.handshake.query.user?.email || "Unknown"}`);
-  console.log(`🆔 User ID: ${socket.handshake.query.user?._id || "Unknown"}`);
 
   // Helper Functions
   const validateGenerateRequest = (data: any) => {
@@ -38,27 +34,21 @@ function registerAIQuizEvents(socket: any, app: any) {
   };
 
   const validateFiles = async (files: any[]): Promise<any[]> => {
-    console.log(`🔍 Validating ${files.length} files from payload`);
     const validatedFiles = [];
     
     for (const file of files) {
       try {
-        console.log(`   📁 Validating file: ${file.fileName} (ID: ${file.id})`);
-        
         // Validate required properties
         if (!file.id || !file.fileName || !file.fileType || !file.s3Url || !file.fileSize) {
-          console.log("      ❌ Missing required file properties");
           continue;
         }
         
         const fileExtension = file.fileType.toLowerCase();
         
         if (!SUPPORTED_FILE_TYPES.includes(fileExtension as any)) {
-          console.log(`      ❌ Unsupported file type: ${fileExtension}`);
           continue;
         }
         if (file.fileSize > AI_QUIZ_LIMITS.MAX_FILE_SIZE) {
-          console.log(`      ❌ File too large: ${file.fileSize} bytes (max: ${AI_QUIZ_LIMITS.MAX_FILE_SIZE})`);
           continue;
         }
         
@@ -70,50 +60,32 @@ function registerAIQuizEvents(socket: any, app: any) {
           size: file.fileSize
         };
         validatedFiles.push(validatedFile);
-        console.log("      ✅ File validated successfully");
       } catch (error) {
-        console.log("      ❌ Error validating file:", error);
         // Silent error handling
       }
     }
-    console.log("📊 File validation complete:", validatedFiles.length + "/" + files.length + " files valid");
     return validatedFiles;
   };
 
   // AI Quiz Generation
   socket.on(AI_QUIZ_SOCKET_EVENTS.CLIENT_TO_SERVER.GENERATE, async function (data: any) {
-    console.log("🚀 AI Quiz Generation Request Received:");
-    console.log(`   📍 Socket ID: ${socket.id}`);
-    console.log(`   👤 User: ${socket.handshake.query.user?.email || "Unknown"}`);
-    console.log(`   🆔 User ID: ${socket.handshake.query.user?._id || "Unknown"}`);
-    console.log(`   📚 Course ID: ${data.courseId}`);
-    console.log(`   📁 Files Count: ${data.files?.length || 0}`);
-    console.log("   ⚙️ Settings:", JSON.stringify(data.settings, null, 2));
-    
     try {
       const { courseId, files, settings } = data;
       const user = socket.handshake.query.user;
       const userId = user._id;
       const sessionId = uuidv4();
-      
-      console.log(`🆔 Generated Session ID: ${sessionId}`);
 
       // Validate input
-      console.log("🔍 Validating input data...");
       const validationError = validateGenerateRequest(data);
       if (validationError) {
-        console.log(`❌ Validation failed: ${validationError.error}`);
         socket.emit(AI_QUIZ_SOCKET_EVENTS.SERVER_TO_CLIENT.ERROR, validationError);
         return;
       }
-      console.log("✅ Input validation passed");
 
       // Check rate limits
-      console.log("⏱️ Checking rate limits...");
       const canProcess = await queueManager.canProcessRequest(userId);
       if (!canProcess) {
         const retryAfter = await queueManager.getRetryAfter(userId);
-        console.log(`❌ Rate limit exceeded. Retry after: ${retryAfter} seconds`);
         socket.emit(AI_QUIZ_SOCKET_EVENTS.SERVER_TO_CLIENT.ERROR, {
           error: "Rate limit exceeded. Please try again later.",
           code: AI_QUIZ_ERROR_CODES.RATE_LIMIT_EXCEEDED,
@@ -121,22 +93,16 @@ function registerAIQuizEvents(socket: any, app: any) {
         });
         return;
       }
-      console.log("✅ Rate limit check passed");
 
       // Validate files from payload
-      console.log("📁 Validating files from payload...");
-      console.log("   📋 Requested files:", files);
-      console.log(`   📋 Requested files: ${files.map((f: any) => `${f.fileName} (${f.fileType})`).join(", ")}`);
       const validatedFiles = await validateFiles(files);
       if (!validatedFiles.length) {
-        console.log("❌ No valid files found in payload");
         socket.emit(AI_QUIZ_SOCKET_EVENTS.SERVER_TO_CLIENT.ERROR, {
           error: "No valid files found in payload",
           code: AI_QUIZ_ERROR_CODES.FILES_NOT_FOUND
         });
         return;
       }
-      console.log(`✅ File validation passed. Valid files: ${validatedFiles.map((f: any) => f.fileName).join(", ")}`);
 
       // Create session record
       const sessionData = {
@@ -165,10 +131,8 @@ function registerAIQuizEvents(socket: any, app: any) {
         }
       };
       const session = await aiQuizSessionsModel.create(sessionData);
-      console.log(`✅ Session created with ID: ${sessionId}`);
 
       // Add to processing queue
-      console.log("📋 Adding job to processing queue...");
       const jobData = {
         sessionId,
         userId,
@@ -178,14 +142,10 @@ function registerAIQuizEvents(socket: any, app: any) {
         socketId: socket.id
       };
       await addAIQuizJob(jobData);
-      console.log("✅ Job added to queue successfully");
 
       // Get queue position and estimated time
-      console.log("📊 Getting queue position...");
       const queuePosition = await queueManager.getQueuePosition(sessionId);
       const estimatedWaitTime = queuePosition * 120; // 2 minutes per job estimate
-      console.log(`   📍 Queue Position: ${queuePosition}`);
-      console.log(`   ⏱️ Estimated Wait Time: ${estimatedWaitTime} seconds`);
 
       // Update session with queue info
       await aiQuizSessionsModel.findOneAndUpdate(
@@ -195,10 +155,8 @@ function registerAIQuizEvents(socket: any, app: any) {
           "progress.estimatedCompletion": new Date(Date.now() + estimatedWaitTime * 1000)
         }
       );
-      console.log("✅ Session updated with queue information");
 
       // SERVER TO CLIENT: Emit success response
-      console.log("📡 Emitting success response to client...");
       const responseData = {
         sessionId,
         status: AI_QUIZ_STATUS.PROCESSING,
@@ -209,25 +167,19 @@ function registerAIQuizEvents(socket: any, app: any) {
         settings: session.settings
       };
       socket.emit(AI_QUIZ_SOCKET_EVENTS.SERVER_TO_CLIENT.STARTED, responseData);
-      console.log("✅ Success response emitted successfully");
-      console.log(`🎉 AI Quiz generation initiated for session: ${sessionId}`);
 
     } catch (error) {
-      console.error("❌ Error during AI Quiz generation:", error);
       const errMsg = typeof error === "object" && error && "message" in error ? (error as any).message : String(error);
       const errorResponse = {
         error: errMsg || "Failed to start AI quiz generation",
         code: AI_QUIZ_ERROR_CODES.GENERATION_ERROR
       };
-      console.log(`📡 Emitting error response: ${errMsg}`);
       socket.emit(AI_QUIZ_SOCKET_EVENTS.SERVER_TO_CLIENT.ERROR, errorResponse);
-      console.log("✅ Error response emitted");
     }
   });
 
   // Get AI Quiz Status
   socket.on(AI_QUIZ_SOCKET_EVENTS.CLIENT_TO_SERVER.GET_STATUS, async function (data: any) {
-    console.log(`📊 Status request received for session: ${data.sessionId}`);
     try {
       const { sessionId } = data;
 
@@ -287,7 +239,6 @@ function registerAIQuizEvents(socket: any, app: any) {
 
   // Cancel AI Quiz Generation
   socket.on(AI_QUIZ_SOCKET_EVENTS.CLIENT_TO_SERVER.CANCEL, async function (data: any) {
-    console.log(`❌ Cancel request received for session: ${data.sessionId}`);
     try {
       const { sessionId } = data;
       const user = socket.handshake.query.user;
@@ -357,7 +308,6 @@ function registerAIQuizEvents(socket: any, app: any) {
 
   // Get Queue Status
   socket.on(AI_QUIZ_SOCKET_EVENTS.CLIENT_TO_SERVER.GET_QUEUE_STATUS, async function () {
-    console.log("📊 Queue status request received");
     try {
       const status = await queueManager.getQueueStatus();
       const user = socket.handshake.query.user;
@@ -389,12 +339,6 @@ function registerAIQuizEvents(socket: any, app: any) {
       socket.emit(AI_QUIZ_SOCKET_EVENTS.SERVER_TO_CLIENT.ERROR, errorResponse);
     }
   });
-  console.log("✅ AI Quiz Events registration completed successfully");
-  console.log("📡 Registered events:");
-  console.log("   🚀 GENERATE:", AI_QUIZ_SOCKET_EVENTS.CLIENT_TO_SERVER.GENERATE);
-  console.log("   📊 GET_STATUS:", AI_QUIZ_SOCKET_EVENTS.CLIENT_TO_SERVER.GET_STATUS);
-  console.log("   ❌ CANCEL:", AI_QUIZ_SOCKET_EVENTS.CLIENT_TO_SERVER.CANCEL);
-  console.log("   📋 GET_QUEUE_STATUS:", AI_QUIZ_SOCKET_EVENTS.CLIENT_TO_SERVER.GET_QUEUE_STATUS);
 }
 
 export { registerAIQuizEvents }; 

@@ -11,6 +11,7 @@ export interface CustomSocket extends Socket {
       user?: IUserResponse;
     };
   };
+  user?: IUserResponse; // Add user property for chat messaging
 }
 
 // Type for the socket parameter in event handlers

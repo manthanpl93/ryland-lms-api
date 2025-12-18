@@ -10,6 +10,9 @@ const { MESSAGE } = EVENT_GROUPS;
  * @param {ConnectionManager} connectionManager - Connection manager
  */
 function messageHandler(io, socket, connectionManager) {
+  // Get models from app
+  const Message = io.app.service("messages").Model;
+  const Conversation = io.app.service("conversations").Model;
   /**
    * Handle message:send event
    * Client sends a new message
@@ -17,7 +20,7 @@ function messageHandler(io, socket, connectionManager) {
   socket.on(MESSAGE.SEND, async (data) => {
     try {
       const { recipientId, content, tempId, conversationId } = data;
-
+      console.log("Message Send Event:", data);
       // Validate input
       if (!recipientId || !content) {
         socket.emit(MESSAGE.ERROR, {
@@ -29,16 +32,19 @@ function messageHandler(io, socket, connectionManager) {
 
       // Check if recipient is online
       const recipientOnline = connectionManager.isUserOnline(recipientId);
+      const allOnlineUsers = connectionManager.getOnlineUserIds();
+      const onlineCount = connectionManager.getOnlineUserCount();
+      console.log(
+        `🔍 Recipient online status: ${recipientOnline} (Recipient ID: ${recipientId})`
+      );
+      console.log(`👥 Total online users: ${onlineCount}`);
+      console.log(`📋 All online user IDs:`, allOnlineUsers);
 
       // Find or create conversation
       let conversation;
       if (conversationId) {
         try {
-          conversation = await io.app
-            .service("conversations")
-            .get(conversationId, {
-              user: socket.user,
-            });
+          conversation = await Conversation.findById(conversationId);
         } catch (error) {
           console.error("Error getting conversation:", error);
         }
@@ -52,17 +58,31 @@ function messageHandler(io, socket, connectionManager) {
         );
       }
 
-      // ✅ PERSIST TO DATABASE using Messages Service
-      const savedMessage = await io.app.service("messages").create(
-        {
-          conversationId: conversation._id.toString(),
-          recipientId,
-          content: content.trim(),
+      // ✅ PERSIST TO DATABASE using Model directly
+      const savedMessage = await Message.create({
+        conversationId: conversation._id,
+        senderId: socket.user._id,
+        recipientId,
+        content: content.trim(),
+        status: {
+          delivered: false,
+          read: false,
         },
-        {
-          user: socket.user, // Pass authenticated user context
-        }
-      );
+      });
+      console.log("Saved Message:", savedMessage);
+
+      // Update conversation's last message
+      await Conversation.findByIdAndUpdate(conversation._id, {
+        lastMessage: {
+          content: content.trim(),
+          senderId: socket.user._id,
+          timestamp: savedMessage.createdAt,
+        },
+        lastMessageAt: savedMessage.createdAt,
+        $inc: {
+          [`unreadCount.${recipientId}`]: 1,
+        },
+      });
 
       // Create socket message object from saved message
       const message = {
@@ -74,6 +94,8 @@ function messageHandler(io, socket, connectionManager) {
         timestamp: savedMessage.createdAt,
         status: "sent",
         conversationId: conversation._id.toString(),
+        senderName: `${socket.user.firstName} ${socket.user.lastName}`,
+        senderAvatar: socket.user.avatar,
       };
 
       console.log(
@@ -82,15 +104,26 @@ function messageHandler(io, socket, connectionManager) {
 
       // Send to recipient if online
       if (recipientOnline) {
+        console.log(`📤 Emitting message:receive to recipient ${recipientId}`, {
+          messageId: message.id,
+          conversationId: message.conversationId,
+        });
         connectionManager.emitToUser(recipientId, MESSAGE.RECEIVE, message);
 
         // Mark as delivered in database if recipient is online
-        await io.app.service("messages").patch(savedMessage._id, {
-          markAsDelivered: true,
+        await Message.findByIdAndUpdate(savedMessage._id, {
+          "status.delivered": true,
+          "status.deliveredAt": new Date(),
         });
+        console.log(`✅ Message marked as delivered in database`);
+      } else {
+        console.log(
+          `⚠️ Recipient ${recipientId} is offline - message not sent via socket`
+        );
       }
 
-      // Confirm delivery to sender
+      // Confirm delivery to sender (sender already has optimistic message)
+      // This will update the optimistic message with real ID and mark as delivered
       socket.emit(MESSAGE.DELIVERED, {
         messageId: message.id,
         tempId: message.tempId,
@@ -123,15 +156,10 @@ function messageHandler(io, socket, connectionManager) {
       console.log(`Message read: ${messageId} by ${socket.user._id}`);
 
       // ✅ PERSIST TO DATABASE - Mark message as read
-      await io.app.service("messages").patch(
-        messageId,
-        {
-          markAsRead: true,
-        },
-        {
-          user: socket.user,
-        }
-      );
+      await Message.findByIdAndUpdate(messageId, {
+        "status.read": true,
+        "status.readAt": new Date(),
+      });
 
       const readData = {
         messageId,
@@ -164,21 +192,33 @@ function messageHandler(io, socket, connectionManager) {
 
       console.log(`Message updated: ${messageId}`);
 
+      // Get the original message first
+      const originalMessage = await Message.findById(messageId);
+      if (!originalMessage) {
+        socket.emit(MESSAGE.ERROR, {
+          error: "Message not found",
+          messageId,
+        });
+        return;
+      }
+
       // ✅ PERSIST TO DATABASE - Update message content
-      const updatedMessage = await io.app.service("messages").patch(
+      const updatedMessage = await Message.findByIdAndUpdate(
         messageId,
         {
           content: content.trim(),
+          isEdited: true,
+          editedAt: new Date(),
+          originalContent:
+            originalMessage.originalContent || originalMessage.content,
         },
-        {
-          user: socket.user,
-        }
+        { new: true }
       );
 
       const updateData = {
         messageId,
         content: updatedMessage.content,
-        updatedAt: updatedMessage.editedAt || new Date().toISOString(),
+        updatedAt: updatedMessage.editedAt.toISOString(),
         updatedBy: socket.user._id,
         isEdited: updatedMessage.isEdited,
       };
@@ -217,15 +257,16 @@ function messageHandler(io, socket, connectionManager) {
       console.log(`Message deleted: ${messageId}`);
 
       // ✅ PERSIST TO DATABASE - Soft delete message
-      const deletedMessage = await io.app
-        .service("messages")
-        .remove(messageId, {
-          user: socket.user,
-        });
+      const deletedAt = new Date();
+      await Message.findByIdAndUpdate(messageId, {
+        isDeleted: true,
+        deletedAt: deletedAt,
+        deletedBy: socket.user._id,
+      });
 
       const deleteData = {
         messageId,
-        deletedAt: deletedMessage.deletedAt || new Date().toISOString(),
+        deletedAt: deletedAt.toISOString(),
         deletedBy: socket.user._id,
       };
 

@@ -48,15 +48,17 @@ class ConnectionManager {
       this.schoolIndex.get(schoolId).add(userId);
 
       // School-role index (nested: schoolId -> role -> userIds)
+      // IMPORTANT: Store role in lowercase for case-insensitive lookup
       if (userRole) {
+        const normalizedRole = userRole.toLowerCase();
         if (!this.schoolRoleIndex.has(schoolId)) {
           this.schoolRoleIndex.set(schoolId, new Map());
         }
         const rolesMap = this.schoolRoleIndex.get(schoolId);
-        if (!rolesMap.has(userRole)) {
-          rolesMap.set(userRole, new Set());
+        if (!rolesMap.has(normalizedRole)) {
+          rolesMap.set(normalizedRole, new Set());
         }
-        rolesMap.get(userRole).add(userId);
+        rolesMap.get(normalizedRole).add(userId);
       }
     }
 
@@ -128,14 +130,16 @@ class ConnectionManager {
       }
 
       // Remove from school-role index
+      // IMPORTANT: Use lowercase role for lookup (same as when adding)
       if (userRole) {
+        const normalizedRole = userRole.toLowerCase();
         const rolesMap = this.schoolRoleIndex.get(schoolId);
         if (rolesMap) {
-          const roleUsers = rolesMap.get(userRole);
+          const roleUsers = rolesMap.get(normalizedRole);
           if (roleUsers) {
             roleUsers.delete(userId);
             if (roleUsers.size === 0) {
-              rolesMap.delete(userRole);
+              rolesMap.delete(normalizedRole);
             }
           }
           // Clean up school entry if no roles left
@@ -217,14 +221,17 @@ class ConnectionManager {
   /**
    * Get online users with a specific role in a school
    * @param {string} schoolId - School ID
-   * @param {string} role - User role (admin, teacher, student)
+   * @param {string} role - User role (admin, teacher, student) - case insensitive
    * @returns {string[]} Array of user IDs
    */
   getUsersBySchoolAndRole(schoolId, role) {
     const rolesMap = this.schoolRoleIndex.get(schoolId);
     if (!rolesMap) return [];
 
-    const userSet = rolesMap.get(role);
+    // Normalize role to lowercase for lookup
+    const normalizedRole = role.toLowerCase();
+    const userSet = rolesMap.get(normalizedRole);
+    
     return userSet ? Array.from(userSet) : [];
   }
 
@@ -280,6 +287,7 @@ class ConnectionManager {
    */
   emitToUser(userId, event, data) {
     const sockets = this.getUserSockets(userId);
+    
     sockets.forEach((socket) => {
       // Check if socket is still connected before emitting
       if (socket.connected) {
@@ -352,13 +360,29 @@ class ConnectionManager {
 
     const { userRole, schoolId, classIds } = metadata;
     const targets = new Set();
+    
+    // Normalize role to lowercase for comparison
+    const roleLower = (userRole || "").toLowerCase();
 
-    if (userRole === "admin") {
+    if (roleLower === "admin") {
       // Admins broadcast to all users in their school
       const schoolUsers = this.getUsersBySchool(schoolId);
-      schoolUsers.forEach((id) => targets.add(id));
-    } else if (userRole === "teacher") {
-      // Teachers broadcast to all other teachers and students in their classes
+      schoolUsers.forEach((id) => {
+        if (id !== userId) targets.add(id); // Exclude self
+      });
+    } else if (roleLower === "teacher") {
+      // Teachers broadcast to:
+      // 1. All admins in their school
+      // 2. All other teachers in their school
+      // 3. All students in their classes
+      
+      // Add all admins from the school
+      const admins = this.getUsersBySchoolAndRole(schoolId, "admin");
+      admins.forEach((adminId) => {
+        if (adminId !== userId) targets.add(adminId);
+      });
+      
+      // Add all other teachers in the school
       const teachers = this.getUsersBySchoolAndRole(schoolId, "teacher");
       teachers.forEach((id) => {
         if (id !== userId) targets.add(id);
@@ -370,14 +394,25 @@ class ConnectionManager {
           const students = this.getUsersByClass(classId);
           students.forEach((studentId) => {
             const studentMeta = this.getUserMetadata(studentId);
-            if (studentMeta && studentMeta.userRole === "student") {
+            if (studentMeta && (studentMeta.userRole || "").toLowerCase() === "student") {
               targets.add(studentId);
             }
           });
         });
       }
-    } else if (userRole === "student") {
-      // Students broadcast to teachers of their classes and other students in same classes
+    } else if (roleLower === "student") {
+      // Students broadcast to:
+      // 1. All admins in their school
+      // 2. All teachers in their classes
+      // 3. All other students in their classes
+      
+      // First, add all admins from the school
+      const admins = this.getUsersBySchoolAndRole(schoolId, "admin");
+      admins.forEach((adminId) => {
+        if (adminId !== userId) targets.add(adminId);
+      });
+      
+      // Then, add teachers and students from their classes
       if (classIds && classIds.length > 0) {
         classIds.forEach((classId) => {
           const classUsers = this.getUsersByClass(classId);
@@ -385,10 +420,11 @@ class ConnectionManager {
             if (classUserId !== userId) {
               const meta = this.getUserMetadata(classUserId);
               if (meta) {
+                const metaRoleLower = (meta.userRole || "").toLowerCase();
                 // Add teachers or other students in the same class
                 if (
-                  meta.userRole === "teacher" ||
-                  meta.userRole === "student"
+                  metaRoleLower === "teacher" ||
+                  metaRoleLower === "student"
                 ) {
                   targets.add(classUserId);
                 }
@@ -398,7 +434,7 @@ class ConnectionManager {
         });
       }
     }
-
+    
     return Array.from(targets);
   }
 }

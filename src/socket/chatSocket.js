@@ -39,7 +39,14 @@ function initializeSocketServer(app) {
       // Query classIds based on role
       let classIds = [];
 
-      if (user.role === "teacher") {
+      // Normalize role to lowercase for comparison
+      const userRoleLower = (user.role || "").toLowerCase();
+      console.log(
+        `Chat: User ${user._id} role: "${user.role}" (normalized: "${userRoleLower}")`
+      );
+
+      if (userRoleLower === "teacher") {
+        console.log(`Chat: Querying teacher classes for user ${user._id}`);
         const teacherClasses = await app.service("class-teachers").find({
           query: {
             teacherId: user._id,
@@ -49,7 +56,11 @@ function initializeSocketServer(app) {
           paginate: false,
         });
         classIds = teacherClasses.map((tc) => tc.classId.toString());
-      } else if (user.role === "student") {
+        console.log(
+          `Chat: Found ${classIds.length} classes for teacher ${user._id}`
+        );
+      } else if (userRoleLower === "student") {
+        console.log(`Chat: Querying student enrollments for user ${user._id}`);
         const enrollments = await app.service("class-enrollments").find({
           query: {
             studentId: user._id,
@@ -59,6 +70,13 @@ function initializeSocketServer(app) {
           paginate: false,
         });
         classIds = enrollments.map((e) => e.classId.toString());
+        console.log(
+          `Chat: Found ${classIds.length} classes for student ${user._id}`
+        );
+      } else {
+        console.log(
+          `Chat: Role "${user.role}" is not teacher or student - no classes to query`
+        );
       }
 
       // Add connection with metadata (updates all indexes)

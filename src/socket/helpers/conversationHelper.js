@@ -7,27 +7,29 @@
  */
 async function findOrCreateConversation(app, senderId, recipientId) {
   try {
+    // Get the Conversation model
+    const Conversation = app.service("conversations").Model;
+    
     // Try to find existing conversation
-    const existingConversations = await app.service("conversations").find({
-      query: {
-        participants: { $all: [senderId, recipientId] },
-      },
-      paginate: false,
-    });
+    const existingConversation = await Conversation.findOne({
+      participants: { $all: [senderId, recipientId] },
+    }).populate("participants", "firstName lastName email role");
 
-    if (existingConversations && existingConversations.length > 0) {
-      return existingConversations[0];
+    if (existingConversation) {
+      return existingConversation;
     }
 
     // Create new conversation if not found
-    const conversation = await app.service("conversations").create(
-      {
-        recipientId,
+    const conversation = await Conversation.create({
+      participants: [senderId, recipientId],
+      unreadCount: {
+        [senderId]: 0,
+        [recipientId]: 0,
       },
-      {
-        user: { _id: senderId },
-      }
-    );
+    });
+
+    // Populate participants
+    await conversation.populate("participants", "firstName lastName email role");
 
     return conversation;
   } catch (error) {
