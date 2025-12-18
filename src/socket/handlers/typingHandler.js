@@ -15,26 +15,25 @@ function typingHandler(io, socket, connectionManager) {
    */
   socket.on(TYPING.START, (data) => {
     try {
-      const { recipientId } = data;
+      const { recipientId, conversationId } = data;
 
       if (!recipientId) {
         return;
       }
 
-      console.log(`Typing started: ${socket.user._id} -> ${recipientId}`);
-
       // Check if recipient is online
       const recipientOnline = connectionManager.isUserOnline(recipientId);
 
       if (recipientOnline) {
-        // Notify recipient
+        // Notify recipient with conversationId
         connectionManager.emitToUser(recipientId, TYPING.START, {
           userId: socket.user._id,
+          conversationId: conversationId,
           timestamp: new Date().toISOString(),
         });
       }
     } catch (error) {
-      console.error("Error handling typing:start:", error);
+      // Error handling typing:start
     }
   });
 
@@ -44,26 +43,25 @@ function typingHandler(io, socket, connectionManager) {
    */
   socket.on(TYPING.STOP, (data) => {
     try {
-      const { recipientId } = data;
+      const { recipientId, conversationId } = data;
 
       if (!recipientId) {
         return;
       }
 
-      console.log(`Typing stopped: ${socket.user._id} -> ${recipientId}`);
-
       // Check if recipient is online
       const recipientOnline = connectionManager.isUserOnline(recipientId);
 
       if (recipientOnline) {
-        // Notify recipient
+        // Notify recipient with conversationId
         connectionManager.emitToUser(recipientId, TYPING.STOP, {
           userId: socket.user._id,
+          conversationId: conversationId,
           timestamp: new Date().toISOString(),
         });
       }
     } catch (error) {
-      console.error("Error handling typing:stop:", error);
+      // Error handling typing:stop
     }
   });
 }
