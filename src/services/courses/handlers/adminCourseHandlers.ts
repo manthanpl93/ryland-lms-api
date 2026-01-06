@@ -7,7 +7,7 @@ import mongoose from "mongoose";
 import { analyzeDetailedChanges } from "../publish-lib";
 import { IPublishChangesResponse } from "../../../types/courses.types";
 import { copyS3File } from "../../../utils/utilities";
-import CoursePreviewModel from "../../../models/course-preview.model";
+import studentProgressModel from "../../../models/student-progress.model";
 import xlsx from "xlsx";
 import path from "path";
 import fs from "fs";
@@ -522,12 +522,12 @@ const getCourseReport = async (
       });
     }
 
-    const allCoursePreviews: any = await CoursePreviewModel(app)
+    const allStudentProgress: any = await studentProgressModel(app)
       .find({ courseId })
       .select("_id completedAt")
       .lean();
 
-    const courseAssessmentCompletedCount = await CoursePreviewModel(app).count({
+    const courseAssessmentCompletedCount = await studentProgressModel(app).count({
       courseId,
       completedAt: { $ne: null },
     });
@@ -555,17 +555,17 @@ const getCourseReport = async (
       },
     ];
 
-    let coursePreviews: any = CoursePreviewModel(app).aggregate(
+    let studentProgressRecords: any = studentProgressModel(app).aggregate(
       aggregationPipeline
     );
 
     if (limit) {
-      coursePreviews = coursePreviews.skip(Number(skip)).limit(Number(limit));
+      studentProgressRecords = studentProgressRecords.skip(Number(skip)).limit(Number(limit));
     }
 
-    coursePreviews = await coursePreviews;
+    studentProgressRecords = await studentProgressRecords;
 
-    const totalDocCount: any = await CoursePreviewModel(app).aggregate([
+    const totalDocCount: any = await studentProgressModel(app).aggregate([
       ...aggregationPipeline,
       {
         $count: "count",
@@ -574,7 +574,7 @@ const getCourseReport = async (
 
     const studentsReport = [];
 
-    for (const p of coursePreviews) {
+    for (const p of studentProgressRecords) {
       const user_data = p.user_data[0];
       const location_data = p.location_data[0];
 
@@ -652,7 +652,7 @@ const getCourseReport = async (
     }
     return {
       ...course,
-      totalParticipants: allCoursePreviews.length,
+      totalParticipants: allStudentProgress.length,
       totalCompleted: courseAssessmentCompletedCount,
       studentsReport,
       total: Array.isArray(totalDocCount) ? totalDocCount[0]?.count : 0,

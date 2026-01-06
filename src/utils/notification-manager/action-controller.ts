@@ -15,12 +15,11 @@ import { queueNotificationMessage } from "../../processors";
 import moment from "moment-timezone";
 import configuration from "@feathersjs/configuration";
 const { userTimeZone: USER_TZ = "America/New_York" } = configuration()();
-import createCoursePreviewModel from "../../models/course-preview.model";
+import studentProgressModel from "../../models/student-progress.model";
 import app from "../../app";
 import path from "path";
 import fs from "fs";
 import { generateRandomString, uploadFileToS3 } from "../utilities";
-import createCoursesPreviewModel from "../../models/course-preview.model";
 
 export const studentEnrolled = async (payload: any) => {
   const { studentId, notificationId, courseId } = payload;
@@ -512,13 +511,10 @@ const studentsEnrolledReport = async (params: any) => {
   const records: any = [];
 
   // get records
-  const coursePreviewRecords: any = await createCoursePreviewModel(app)
+  const studentProgressRecords: any = await studentProgressModel(app)
     .find({
       courseId: courseId,
       joinedDate: { $gte: fromDate, $lte: toDate },
-    })
-    .populate({
-      path: "approvedCourse",
     })
     .populate({
       path: "userId",
@@ -526,13 +522,13 @@ const studentsEnrolledReport = async (params: any) => {
     })
     .lean();
 
-  for (const preview of coursePreviewRecords.filter((r: any) =>
+  for (const progress of studentProgressRecords.filter((r: any) =>
     locations.includes(r.userId.location.toString())
   )) {
     const {
       joinedDate,
       userId: { name, lastName, email, mobileNo },
-    } = preview;
+    } = progress;
     const rec = {
       enrolledOn: moment(joinedDate)
         .tz(USER_TZ)
@@ -555,17 +551,17 @@ const studentsEnrolledReport = async (params: any) => {
 const studentsCompletedCourseReport = async (params: any) => {
   const { courseId, locations, fromDate, toDate } = params;
 
-  const coursePreviewDocuments: any = await createCoursesPreviewModel(app)
+  const studentProgressDocuments: any = await studentProgressModel(app)
     .find({
       courseId,
       completedAt: { $gte: fromDate, $lte: toDate },
       certificateUrl: { $exists: true, $ne: null },
     })
-    .populate({
-      path: "approvedCourse",
-    })
     .populate("userId")
     .lean();
+
+  // Get course details once
+  const courseDetails: any = await getCourseDetails(courseId);
 
   const headers = {
     submissionTime: "Submission Time",
@@ -579,7 +575,7 @@ const studentsCompletedCourseReport = async (params: any) => {
 
   const records: any = [];
 
-  for (const completedCourse of coursePreviewDocuments) {
+  for (const completedCourse of studentProgressDocuments) {
     const location = completedCourse.userId.location;
     if (!locations.includes(location.toString())) continue;
 
@@ -589,7 +585,7 @@ const studentsCompletedCourseReport = async (params: any) => {
     const mobileNo = completedCourse.userId.mobileNo;
     const completedAt = completedCourse.completedAt;
     const email = completedCourse.userId.email;
-    const courseName = completedCourse.approvedCourse.title;
+    const courseName = courseDetails.title;
     const certificateLink = completedCourse.certificateUrl ?? "";
 
     if (!certificateLink) continue;

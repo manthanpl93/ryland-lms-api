@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import app from "../app";
-import createCoursesPreviewModel from "../models/course-preview.model";
+import studentProgressModel from "../models/student-progress.model";
+import createPublishedCoursesModel from "../models/published-courses.model";
 import { sendEmail } from "../utils/email";
 import fs from "fs";
 import path from "path";
@@ -84,12 +85,9 @@ export const getLastWeekCourseCompletionReport = async (sendMail = false) => {
     lastWeekEnd = lastWeekStart.clone().endOf("week");
   }
 
-  const coursePreviewDocuments: any = await createCoursesPreviewModel(app)
+  const studentProgressDocuments: any = await studentProgressModel(app)
     .find({
       completedAt: { $gte: lastWeekStart.toDate(), $lte: lastWeekEnd.toDate() },
-    })
-    .populate({
-      path: "approvedCourse",
     })
     .populate("userId")
     .lean();
@@ -101,7 +99,7 @@ export const getLastWeekCourseCompletionReport = async (sendMail = false) => {
 
   const defaultEmails = ["hrs@xtcare.com", "tech.support@teampumpkin.com"];
 
-  for (const completedCourse of coursePreviewDocuments) {
+  for (const completedCourse of studentProgressDocuments) {
     const user = completedCourse.userId;
     const locationId = user?.location?.toString();
 
@@ -109,6 +107,12 @@ export const getLastWeekCourseCompletionReport = async (sendMail = false) => {
     const certificateUrl = completedCourse.certificateUrl;
 
     if (!completedAt || !certificateUrl) continue;
+
+    // Get published course details
+    const publishedCourse: any = await createPublishedCoursesModel(app)
+      .findOne({ mainCourse: completedCourse.courseId })
+      .select("title")
+      .lean();
 
     const category = await categoriesModel(app).findById(locationId);
 
@@ -122,7 +126,7 @@ export const getLastWeekCourseCompletionReport = async (sendMail = false) => {
       user.lastName ?? "",
       user.email ?? "",
       user.mobileNo ?? "",
-      completedCourse.approvedCourse.title ?? "",
+      publishedCourse?.title ?? "",
       certificateUrl,
     ]
       .map((val) => `"${val}"`)
@@ -135,7 +139,7 @@ export const getLastWeekCourseCompletionReport = async (sendMail = false) => {
           "Submission Time,First Name,Last Name,Email Address,Telephone,Course Name,Certificate",
         ],
         hrEmails: Array.from(hrEmails),
-        courseTitle: completedCourse.approvedCourse.title,
+        courseTitle: publishedCourse?.title,
       };
     }
 

@@ -5,8 +5,6 @@ import lock from "./lock/lock.service";
 import courses from "./courses/courses.service";
 import arrayState from "./array-state/array-state.service";
 import upload from "./upload/upload.service";
-import enrolCourse from "./enrol-course/enrol-course.service";
-import coursePreview from "./course-preview/course-preview.service";
 import countries from "./countries/countries.service";
 import publishedCourses from "./published-courses/published-courses.service";
 import notifications from "./notifications/notifications.service";
@@ -26,6 +24,10 @@ import classEnrollments from "./class-enrollments/class-enrollments.service";
 import classTeachers from "./class-teachers/class-teachers.service";
 import courseSections from "./course-sections/course-sections.service";
 import lessons from "./lessons/lessons.service";
+import courseLessons from "./course-lessons";
+import conversations from "./conversations/conversations.service";
+import messages from "./messages/messages.service";
+import messagingContacts from "./messaging-contacts/messaging-contacts.service";
 // Don't remove this comment. It's needed to format import lines nicely.
 
 export default function (app: Application): void {
@@ -36,8 +38,6 @@ export default function (app: Application): void {
   app.configure(upload);
   app.configure(arrayState);
   app.configure(upload);
-  app.configure(enrolCourse);
-  app.configure(coursePreview);
   app.configure(countries);
   app.configure(publishedCourses);
   app.configure(notifications);
@@ -57,4 +57,8 @@ export default function (app: Application): void {
   app.configure(classTeachers);
   app.configure(courseSections);
   app.configure(lessons);
+  app.configure(courseLessons);
+  app.configure(conversations);
+  app.configure(messages);
+  app.configure(messagingContacts);
 }

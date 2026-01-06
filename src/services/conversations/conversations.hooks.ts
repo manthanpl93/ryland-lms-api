@@ -1,8 +1,7 @@
-import * as feathersAuthentication from "@feathersjs/authentication";
-import * as local from "@feathersjs/authentication-local";
-// Don't remove this comment. It's needed to format import lines nicely.
+import { HooksObject } from "@feathersjs/feathers";
+import * as authentication from "@feathersjs/authentication";
 
-const { authenticate } = feathersAuthentication.hooks;
+const { authenticate } = authentication.hooks;
 
 export default {
   before: {
@@ -16,10 +15,7 @@ export default {
   },
 
   after: {
-    all: [
-      // Make sure the password field is never sent to the client
-      // Always must be the last hook
-    ],
+    all: [],
     find: [],
     get: [],
     create: [],

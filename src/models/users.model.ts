@@ -64,7 +64,7 @@ export default function (app: Application): Model<any> {
 
   // Virtual for courses enrolled
   schema.virtual("coursesEnrolled", {
-    ref: "CoursePreview",
+    ref: "studentProgress",
     localField: "_id",
     foreignField: "userId",
   });
