@@ -207,3 +207,4 @@ socket.emit('error', { code: 401, message: 'Invalid or missing JWT token' });
 
 [← Back to API Design Overview](../3-api-design.md)
 
+

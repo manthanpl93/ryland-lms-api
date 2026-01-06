@@ -143,34 +143,79 @@ function messageHandler(io, socket, connectionManager) {
 
   /**
    * Handle message:read event
-   * Client marks message as read
+   * Client opens conversation - mark all unread messages as read
    */
   socket.on(MESSAGE.READ, async (data) => {
     try {
-      const { messageId, senderId } = data;
+      const { conversationId } = data;
+      const readerId = socket.user._id;
 
-      if (!messageId || !senderId) {
+      console.log(
+        `📖 User ${readerId} marking messages as read in conversation ${conversationId}`
+      );
+
+      // Find ALL unread messages in this conversation for current user
+      const unreadMessages = await Message.find({
+        conversationId,
+        recipientId: readerId,
+        "status.read": false,
+      });
+
+      if (unreadMessages.length === 0) {
+        console.log(
+          `✅ No unread messages in conversation ${conversationId}`
+        );
         return;
       }
 
-      console.log(`Message read: ${messageId} by ${socket.user._id}`);
+      const messageIds = unreadMessages.map((m) => m._id);
+      const now = new Date();
 
-      // ✅ PERSIST TO DATABASE - Mark message as read
-      await Message.findByIdAndUpdate(messageId, {
+      console.log(
+        `📝 Marking ${messageIds.length} messages as read in conversation ${conversationId}`
+      );
+
+      // Mark all unread messages as read (single batch operation)
+      await Message.updateMany(
+        { _id: { $in: messageIds } },
+        {
         "status.read": true,
-        "status.readAt": new Date(),
+          "status.readAt": now,
+        }
+      );
+
+      // Reset unreadCount to 0 for this user
+      await Conversation.findByIdAndUpdate(conversationId, {
+        [`unreadCount.${readerId}`]: 0,
       });
 
-      const readData = {
-        messageId,
-        readBy: socket.user._id,
-        readAt: new Date().toISOString(),
-      };
+      console.log(
+        `✅ Marked ${messageIds.length} messages as read in conversation ${conversationId}`
+      );
 
-      // Notify sender via socket
-      connectionManager.emitToUser(senderId, MESSAGE.READ, readData);
+      // Emit read confirmation to all unique senders (if online)
+      const senderIds = [
+        ...new Set(unreadMessages.map((m) => m.senderId.toString())),
+      ];
+
+      senderIds.forEach((senderId) => {
+        if (senderId !== readerId.toString()) {
+          console.log(
+            `📤 Notifying sender ${senderId} about read confirmation`
+          );
+          connectionManager.emitToUser(senderId, MESSAGE.READ, {
+            conversationId,
+            messageIds: messageIds.map((id) => id.toString()),
+            readBy: readerId,
+            readAt: now.toISOString(),
+          });
+        }
+      });
     } catch (error) {
-      console.error("Error handling message:read:", error);
+      console.error("❌ Error handling message:read:", error);
+      socket.emit(MESSAGE.ERROR, {
+        error: "Failed to mark messages as read",
+      });
     }
   });
 
@@ -254,7 +299,37 @@ function messageHandler(io, socket, connectionManager) {
         return;
       }
 
-      console.log(`Message deleted: ${messageId}`);
+      // ✅ SECURITY: Verify the message exists and belongs to the user
+      const message = await Message.findById(messageId);
+      
+      if (!message) {
+        socket.emit(MESSAGE.ERROR, {
+          error: "Message not found",
+          messageId,
+        });
+        return;
+      }
+
+      // ✅ SECURITY: Verify user owns the message
+      if (message.senderId.toString() !== socket.user._id.toString()) {
+        console.log(`❌ Unauthorized delete attempt: User ${socket.user._id} tried to delete message ${messageId} owned by ${message.senderId}`);
+        socket.emit(MESSAGE.ERROR, {
+          error: "Unauthorized: You can only delete your own messages",
+          messageId,
+        });
+        return;
+      }
+
+      // ✅ SECURITY: Prevent deleting already deleted messages
+      if (message.isDeleted) {
+        socket.emit(MESSAGE.ERROR, {
+          error: "Message already deleted",
+          messageId,
+        });
+        return;
+      }
+
+      console.log(`Message deleted: ${messageId} by user ${socket.user._id}`);
 
       // ✅ PERSIST TO DATABASE - Soft delete message
       const deletedAt = new Date();
