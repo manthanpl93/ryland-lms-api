@@ -28,6 +28,7 @@ import courseLessons from "./course-lessons";
 import conversations from "./conversations/conversations.service";
 import messages from "./messages/messages.service";
 import messagingContacts from "./messaging-contacts/messaging-contacts.service";
+import forumClasses from "./forum-classes/forum-classes.service";
 // Don't remove this comment. It's needed to format import lines nicely.
 
 export default function (app: Application): void {
@@ -61,4 +62,5 @@ export default function (app: Application): void {
   app.configure(conversations);
   app.configure(messages);
   app.configure(messagingContacts);
+  app.configure(forumClasses);
 }
