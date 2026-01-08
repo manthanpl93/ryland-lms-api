@@ -10,9 +10,13 @@ export default function (app: Application): Model<any> {
   const forumSettingsSchema = new Schema(
     {
       enableClassForum: { type: Boolean, default: false },
+      classCommunityId: { type: Schema.Types.ObjectId, ref: "communities", default: null },
       enableCourseForum: { type: Boolean, default: false },
       enableAllCourses: { type: Boolean, default: false },
-      selectedCourses: [{ type: Schema.Types.ObjectId, ref: "courses" }],
+      selectedCourses: [{
+        courseId: { type: Schema.Types.ObjectId, ref: "courses", required: true },
+        communityId: { type: Schema.Types.ObjectId, ref: "communities", default: null }
+      }],
     },
     { _id: false }
   );

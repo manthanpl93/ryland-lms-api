@@ -126,11 +126,15 @@ export class ForumClasses {
     const teachers = await this.getClassTeachers(classData._id.toString());
     const communities = await this.getClassCommunities(classData);
 
+    // Calculate total active discussions from all communities
+    const activeDiscussions = communities.reduce((sum, c) => sum + (c.totalPosts || 0), 0);
+
     return {
       _id: classData._id.toString(),
       name: classData.name,
       totalStudents: classData.totalStudents || 0,
       totalCourses: classData.totalCourses || 0,
+      activeDiscussions,
       teachers,
       communities
     };
@@ -178,11 +182,14 @@ export class ForumClasses {
     const communities: ICommunity[] = [];
     const forumSettings = classData.forumSettings || {};
 
-    // Add class community if enabled
-    if (forumSettings.enableClassForum === true) {
+    // Add class community if enabled and has communityId
+    if (forumSettings.enableClassForum === true && forumSettings.classCommunityId) {
+      const postCount = await this.getPostCount(forumSettings.classCommunityId.toString());
       communities.push({
+        _id: forumSettings.classCommunityId.toString(),
         name: "Class Community",
-        totalPosts: 50
+        type: "class",
+        totalPosts: postCount
       });
     }
 
@@ -206,32 +213,69 @@ export class ForumClasses {
     forumSettings: any
   ): Promise<ICommunity[]> {
     const coursesModel = this.app.get("mongooseClient").models.courses;
-    let courses: any[] = [];
-
-    if (forumSettings.enableAllCourses === true) {
-      // Get all courses for this class
-      courses = await coursesModel
-        .find({
-          classId: classId
-        })
-        .select("name")
-        .lean();
-    } else if (forumSettings.selectedCourses && forumSettings.selectedCourses.length > 0) {
-      // Get only selected courses
-      courses = await coursesModel
-        .find({
-          _id: { $in: forumSettings.selectedCourses },
-          classId: classId
-        })
-        .select("name")
-        .lean();
+    
+    if (!forumSettings.selectedCourses || forumSettings.selectedCourses.length === 0) {
+      return [];
     }
 
-    // Map courses to community format
-    return courses.map((course: any) => ({
-      name: course.name,
-      totalPosts: 50
-    }));
+    // Extract course IDs from selectedCourses array
+    const courseIds = forumSettings.selectedCourses.map((sc: any) => 
+      sc.courseId || sc // Support both old and new format
+    );
+
+    // Get course details
+    const courses = await coursesModel
+      .find({
+        _id: { $in: courseIds },
+        classId: classId,
+        $or: [{ deleted: false }, { deleted: { $exists: false } }]
+      })
+      .select("title")
+      .lean();
+
+    // Map courses to community format with IDs from selectedCourses
+    const communities: ICommunity[] = [];
+    
+    for (const course of courses) {
+      const mapping = forumSettings.selectedCourses.find((sc: any) => {
+        const scCourseId = (sc.courseId || sc).toString();
+        return scCourseId === course._id.toString();
+      });
+
+      if (mapping && mapping.communityId) {
+        const postCount = await this.getPostCount(mapping.communityId.toString());
+        
+        communities.push({
+          _id: mapping.communityId.toString(),
+          name: course.title || "Untitled Course",
+          type: "course",
+          totalPosts: postCount,
+          courseId: course._id.toString()
+        });
+      }
+    }
+
+    return communities;
+  }
+
+  /**
+   * Get post count for a community
+   */
+  private async getPostCount(communityId: string): Promise<number> {
+    try {
+      const forumPostsModel = this.app.get("mongooseClient").models.forumPosts;
+      if (!forumPostsModel) {
+        return 0; // Model doesn't exist yet
+      }
+      
+      return await forumPostsModel.countDocuments({
+        communityId: communityId,
+        isDeleted: false
+      });
+    } catch (error) {
+      // Model might not be registered yet
+      return 0;
+    }
   }
 }
 

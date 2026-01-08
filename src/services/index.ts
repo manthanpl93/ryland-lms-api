@@ -29,6 +29,13 @@ import conversations from "./conversations/conversations.service";
 import messages from "./messages/messages.service";
 import messagingContacts from "./messaging-contacts/messaging-contacts.service";
 import forumClasses from "./forum-classes/forum-classes.service";
+import forumTags from "./forum-tags/forum-tags.service";
+import forumPosts from "./forum-posts/forum-posts.service";
+import forumPostUpvote from "./forum-post-upvote/forum-post-upvote.service";
+import forumPostComments from "./forum-post-comments/forum-post-comments.service";
+import forumCommentUpvote from "./forum-comment-upvote/forum-comment-upvote.service";
+import savedPosts from "./saved-posts/saved-posts.service";
+import forumFeed from "./forum-feed/forum-feed.service";
 // Don't remove this comment. It's needed to format import lines nicely.
 
 export default function (app: Application): void {
@@ -63,4 +70,11 @@ export default function (app: Application): void {
   app.configure(messages);
   app.configure(messagingContacts);
   app.configure(forumClasses);
+  app.configure(forumTags);
+  app.configure(forumPosts);
+  app.configure(forumPostUpvote);
+  app.configure(forumPostComments);
+  app.configure(forumCommentUpvote);
+  app.configure(savedPosts);
+  app.configure(forumFeed);
 }

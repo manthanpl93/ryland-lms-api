@@ -19,6 +19,7 @@ import channels from "./channels";
 import { HookContext as FeathersHookContext } from "@feathersjs/feathers";
 import authentication from "./authentication";
 import mongoose from "./mongoose";
+import modelsLoader from "./models-loader";
 import initializeEvents from "./socket/events";
 import {
   setSocketById,
@@ -81,6 +82,7 @@ app.use("/", express.static(app.get("public")));
 app.configure(express.rest());
 
 app.configure(mongoose);
+app.configure(modelsLoader);
 
 // Configure other middleware (see `middleware/index.ts`)
 app.configure(middleware);

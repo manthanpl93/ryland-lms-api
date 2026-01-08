@@ -8,6 +8,7 @@ export interface IForumClass {
   name: string;
   totalStudents: number;
   totalCourses: number;
+  activeDiscussions: number;
   teachers: ITeacherInfo[];
   communities: ICommunity[];
 }
@@ -17,7 +18,10 @@ export interface ITeacherInfo {
 }
 
 export interface ICommunity {
+  _id: string;
   name: string;
+  type: "class" | "course";
   totalPosts: number;
+  courseId?: string;
 }
 
