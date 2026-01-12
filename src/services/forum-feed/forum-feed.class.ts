@@ -145,7 +145,10 @@ export class ForumFeed {
 
     const savedMap: any = {};
     savedPosts.forEach((saved: any) => {
-      savedMap[saved.postId.toString()] = true;
+      savedMap[saved.postId.toString()] = {
+        isSaved: true,
+        savedPostId: saved._id.toString(),
+      };
     });
 
     // Enrich each post
@@ -171,8 +174,10 @@ export class ForumFeed {
       // Add user vote status
       post.userVote = voteMap[post._id.toString()] || null;
 
-      // Add saved status
-      post.isSaved = savedMap[post._id.toString()] || false;
+      // Add saved status and savedPostId
+      const savedInfo = savedMap[post._id.toString()];
+      post.isSaved = savedInfo?.isSaved || false;
+      post.savedPostId = savedInfo?.savedPostId || undefined;
     }
 
     return posts;

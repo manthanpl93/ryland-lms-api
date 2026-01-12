@@ -7,6 +7,9 @@
  * - 6 Classes
  * - 15 Courses
  * - All necessary enrollments and assignments
+ * - Forum communities (class and course forums)
+ * - Forum tags
+ * - Forum posts with comments
  * 
  * Run with: node scripts/seed-test-data.js
  */
@@ -179,6 +182,61 @@ const classTeacherSchema = new mongoose.Schema({
   updatedAt: Date
 });
 
+const communitySchema = new mongoose.Schema({
+  name: String,
+  type: String, // 'class' or 'course'
+  classId: mongoose.Schema.Types.ObjectId,
+  courseId: mongoose.Schema.Types.ObjectId,
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+});
+
+const forumTagSchema = new mongoose.Schema({
+  name: String,
+  communityId: mongoose.Schema.Types.ObjectId,
+  color: String,
+  usageCount: Number,
+  createdBy: mongoose.Schema.Types.ObjectId,
+  isActive: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+});
+
+const forumPostSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  authorId: mongoose.Schema.Types.ObjectId,
+  communityId: mongoose.Schema.Types.ObjectId,
+  classId: mongoose.Schema.Types.ObjectId,
+  tags: [mongoose.Schema.Types.ObjectId],
+  upvotes: Number,
+  downvotes: Number,
+  voteScore: Number,
+  commentCount: Number,
+  isDeleted: Boolean,
+  deletedAt: Date,
+  deletedBy: mongoose.Schema.Types.ObjectId,
+  createdAt: Date,
+  updatedAt: Date
+});
+
+const forumCommentSchema = new mongoose.Schema({
+  postId: mongoose.Schema.Types.ObjectId,
+  parentCommentId: mongoose.Schema.Types.ObjectId,
+  content: String,
+  authorId: mongoose.Schema.Types.ObjectId,
+  upvotes: Number,
+  downvotes: Number,
+  voteScore: Number,
+  replyCount: Number,
+  isDeleted: Boolean,
+  deletedAt: Date,
+  deletedBy: mongoose.Schema.Types.ObjectId,
+  createdAt: Date,
+  updatedAt: Date
+});
+
 // Create models
 const User = mongoose.model('users', userSchema);
 const Class = mongoose.model('classes', classSchema);
@@ -186,6 +244,103 @@ const Course = mongoose.model('courses', courseSchema);
 const PublishedCourse = mongoose.model('publishedCourses', publishedCourseSchema);
 const ClassEnrollment = mongoose.model('classEnrollments', classEnrollmentSchema);
 const ClassTeacher = mongoose.model('classTeachers', classTeacherSchema);
+const Community = mongoose.model('communities', communitySchema);
+const ForumTag = mongoose.model('forumTags', forumTagSchema);
+const ForumPost = mongoose.model('forumPosts', forumPostSchema);
+const ForumComment = mongoose.model('forumPostComments', forumCommentSchema);
+
+// Helper function to clean up existing test data
+async function cleanupData() {
+  console.log('\n🧹 Cleaning up existing test data...\n');
+
+  try {
+    const schoolObjId = new ObjectId(SCHOOL_ID);
+
+    // Delete students
+    const studentsResult = await User.deleteMany({
+      schoolId: schoolObjId,
+      role: 'Student',
+      email: { $regex: /@test\.com$/ }
+    });
+    console.log(`🗑️  Deleted ${studentsResult.deletedCount} test students`);
+
+    // Delete teachers
+    const teachersResult = await User.deleteMany({
+      schoolId: schoolObjId,
+      role: 'Teacher',
+      email: { $regex: /@test\.com$/ }
+    });
+    console.log(`🗑️  Deleted ${teachersResult.deletedCount} test teachers`);
+
+    // Get all test classes to cleanup related data
+    const testClasses = await Class.find({
+      schoolId: schoolObjId,
+      name: { $regex: /^Grade (9|10|11|12)[AB]$/ }
+    });
+    const classIds = testClasses.map(c => c._id);
+
+    if (classIds.length > 0) {
+      // Delete forum comments first (references posts)
+      const commentsResult = await ForumComment.deleteMany({
+        postId: { $exists: true }
+      });
+      console.log(`🗑️  Deleted ${commentsResult.deletedCount} forum comments`);
+
+      // Delete forum posts
+      const postsResult = await ForumPost.deleteMany({
+        classId: { $in: classIds }
+      });
+      console.log(`🗑️  Deleted ${postsResult.deletedCount} forum posts`);
+
+      // Delete forum tags
+      const tagsResult = await ForumTag.deleteMany({
+        communityId: { $exists: true }
+      });
+      console.log(`🗑️  Deleted ${tagsResult.deletedCount} forum tags`);
+
+      // Delete communities
+      const communitiesResult = await Community.deleteMany({
+        classId: { $in: classIds }
+      });
+      console.log(`🗑️  Deleted ${communitiesResult.deletedCount} communities`);
+
+      // Delete class enrollments
+      const enrollmentsResult = await ClassEnrollment.deleteMany({
+        classId: { $in: classIds }
+      });
+      console.log(`🗑️  Deleted ${enrollmentsResult.deletedCount} class enrollments`);
+
+      // Delete teacher assignments
+      const assignmentsResult = await ClassTeacher.deleteMany({
+        classId: { $in: classIds }
+      });
+      console.log(`🗑️  Deleted ${assignmentsResult.deletedCount} teacher assignments`);
+
+      // Delete published courses
+      const publishedResult = await PublishedCourse.deleteMany({
+        classId: { $in: classIds }
+      });
+      console.log(`🗑️  Deleted ${publishedResult.deletedCount} published courses`);
+
+      // Delete courses
+      const coursesResult = await Course.deleteMany({
+        classId: { $in: classIds }
+      });
+      console.log(`🗑️  Deleted ${coursesResult.deletedCount} courses`);
+
+      // Delete classes
+      const classesResult = await Class.deleteMany({
+        _id: { $in: classIds }
+      });
+      console.log(`🗑️  Deleted ${classesResult.deletedCount} classes`);
+    }
+
+    console.log('\n✅ Cleanup completed!\n');
+  } catch (error) {
+    console.error('❌ Error during cleanup:', error);
+    throw error;
+  }
+}
 
 // Helper function to create a course outline with modules
 function createCourseOutline(courseTitle) {
@@ -517,10 +672,300 @@ async function seedData() {
     }
     console.log('✅ Updated class statistics');
 
+    // Create Forum Communities
+    console.log('\n💬 Creating forum communities...');
+    const communities = [];
+
+    // Create class communities
+    for (const cls of classes) {
+      communities.push({
+        name: `${cls.name} Community`,
+        type: 'class',
+        classId: cls._id,
+        courseId: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    // Create course communities (for courses where forum is enabled)
+    for (const course of courses) {
+      communities.push({
+        name: `${course.title} Forum`,
+        type: 'course',
+        classId: course.classId,
+        courseId: course._id,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    const createdCommunities = await Community.insertMany(communities);
+    console.log(`✅ Created ${createdCommunities.length} communities (${classes.length} class + ${courses.length} course)`);
+
+    // Update class forumSettings with community IDs
+    console.log('\n🔗 Linking communities to classes...');
+    const db = mongoose.connection.db;
+    const classesCollection = db.collection('classes');
+    
+    for (const cls of classes) {
+      // Find the class community for this class
+      const classCommunity = createdCommunities.find(c => 
+        c.type === 'class' && c.classId.equals(cls._id)
+      );
+
+      // Find all course communities for this class
+      const courseCommunities = createdCommunities.filter(c => 
+        c.type === 'course' && c.classId.equals(cls._id)
+      );
+
+      // Build selectedCourses array with courseId and communityId mappings
+      const selectedCourses = courseCommunities.map(cc => ({
+        courseId: cc.courseId,
+        communityId: cc._id
+      }));
+
+      // Use raw MongoDB update to avoid Mongoose schema casting issues
+      await classesCollection.updateOne(
+        { _id: cls._id },
+        {
+          $set: {
+            'forumSettings.classCommunityId': classCommunity ? classCommunity._id : null,
+            'forumSettings.selectedCourses': selectedCourses
+          }
+        }
+      );
+    }
+    console.log(`✅ Linked ${createdCommunities.length} communities to their classes`);
+
+    // Create Forum Tags
+    console.log('\n🏷️  Creating forum tags...');
+    const tagNames = [
+      { name: 'question', color: '#3B82F6' },
+      { name: 'discussion', color: '#8B5CF6' },
+      { name: 'help', color: '#EF4444' },
+      { name: 'announcement', color: '#10B981' },
+      { name: 'resource', color: '#F59E0B' },
+      { name: 'feedback', color: '#EC4899' },
+      { name: 'homework', color: '#6366F1' },
+      { name: 'exam', color: '#DC2626' }
+    ];
+
+    const forumTags = [];
+    for (const community of createdCommunities) {
+      // Add 4-6 tags per community
+      const numTags = Math.floor(Math.random() * 3) + 4;
+      const selectedTags = tagNames.slice(0, numTags);
+
+      for (const tag of selectedTags) {
+        forumTags.push({
+          name: tag.name,
+          communityId: community._id,
+          color: tag.color,
+          usageCount: 0,
+          createdBy: teachers[0]._id, // First teacher creates tags
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+    }
+
+    const createdTags = await ForumTag.insertMany(forumTags);
+    console.log(`✅ Created ${createdTags.length} forum tags`);
+
+    // Create Forum Posts
+    console.log('\n📝 Creating forum posts...');
+    const forumPosts = [];
+    const postTemplates = [
+      {
+        title: 'Welcome to our community!',
+        content: 'Hello everyone! Welcome to our learning community. Feel free to ask questions, share resources, and help each other learn. Let\'s make this a great experience for everyone!'
+      },
+      {
+        title: 'Question about homework assignment',
+        content: 'Hi, I\'m having trouble understanding the homework assignment from last week. Can someone explain the key concepts? Specifically, I\'m confused about the practical applications.'
+      },
+      {
+        title: 'Study group formation',
+        content: 'Looking to form a study group for the upcoming exam. Who wants to join? We can meet after classes to review the material together and quiz each other.'
+      },
+      {
+        title: 'Great resource I found',
+        content: 'I came across this amazing resource that really helped me understand the concepts better. Thought I\'d share it with everyone here. It has great examples and explanations!'
+      },
+      {
+        title: 'Exam preparation tips',
+        content: 'Does anyone have tips for preparing for the upcoming exam? What topics should we focus on? Any study strategies that worked well for you?'
+      },
+      {
+        title: 'Project collaboration',
+        content: 'I\'m working on the group project and would love to collaborate. Anyone interested in brainstorming ideas and dividing the work?'
+      },
+      {
+        title: 'Clarification needed on lecture topic',
+        content: 'Can someone help clarify what was discussed in today\'s lecture? I didn\'t quite understand the main principle that was explained.'
+      },
+      {
+        title: 'Assignment deadline extension?',
+        content: 'Is there any chance we could get an extension on the assignment? Many of us are finding it challenging to complete on time.'
+      }
+    ];
+
+    // Create 2-4 posts per community
+    for (const community of createdCommunities) {
+      const numPosts = Math.floor(Math.random() * 3) + 2;
+      const communityTags = createdTags.filter(t => t.communityId.equals(community._id));
+      
+      // Get eligible authors (students + teachers from this class)
+      const classStudents = students.filter(s => 
+        enrollments.some(e => e.classId.equals(community.classId) && e.studentId.equals(s._id))
+      );
+      const classTeachers = teachers.filter(t =>
+        teacherAssignments.some(ta => ta.classId.equals(community.classId) && ta.teacherId.equals(t._id))
+      );
+      const eligibleAuthors = [...classStudents, ...classTeachers];
+
+      // Skip this community if no eligible authors
+      if (eligibleAuthors.length === 0) {
+        console.log(`⚠️  Skipping community ${community.name} - no eligible authors`);
+        continue;
+      }
+
+      for (let i = 0; i < numPosts; i++) {
+        const template = postTemplates[Math.floor(Math.random() * postTemplates.length)];
+        const author = eligibleAuthors[Math.floor(Math.random() * eligibleAuthors.length)];
+        
+        // Select 1-3 random tags
+        const numTagsForPost = Math.floor(Math.random() * 3) + 1;
+        const selectedPostTags = [];
+        for (let j = 0; j < Math.min(numTagsForPost, communityTags.length); j++) {
+          const tag = communityTags[Math.floor(Math.random() * communityTags.length)];
+          if (!selectedPostTags.some(t => t.equals(tag._id))) {
+            selectedPostTags.push(tag._id);
+          }
+        }
+
+        // Random vote scores
+        const upvotes = Math.floor(Math.random() * 15);
+        const downvotes = Math.floor(Math.random() * 3);
+
+        forumPosts.push({
+          title: template.title,
+          content: template.content,
+          authorId: author._id,
+          communityId: community._id,
+          classId: community.classId,
+          tags: selectedPostTags,
+          upvotes: upvotes,
+          downvotes: downvotes,
+          voteScore: upvotes - downvotes,
+          commentCount: 0,
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null,
+          createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // Random time in last 7 days
+          updatedAt: new Date()
+        });
+      }
+    }
+
+    const createdPosts = await ForumPost.insertMany(forumPosts);
+    console.log(`✅ Created ${createdPosts.length} forum posts`);
+
+    // Update tag usage counts
+    for (const tag of createdTags) {
+      const usageCount = createdPosts.filter(p => 
+        p.tags.some(t => t.equals(tag._id))
+      ).length;
+      await ForumTag.updateOne(
+        { _id: tag._id },
+        { $set: { usageCount } }
+      );
+    }
+
+    // Create Forum Comments
+    console.log('\n💬 Creating forum comments...');
+    const forumComments = [];
+    const commentTemplates = [
+      'Great question! I had the same doubt.',
+      'Thanks for sharing this! Really helpful.',
+      'I think the key concept here is understanding the fundamentals first.',
+      'Can you elaborate more on this point?',
+      'This is exactly what I needed. Thank you!',
+      'I disagree with this approach. I think we should consider alternatives.',
+      'Has anyone tried implementing this? What were your results?',
+      'The teacher explained this well in class. Check your notes from Tuesday.',
+      'I found a similar resource that might help. Let me know if you want the link.',
+      'Count me in! When should we meet?'
+    ];
+
+    // Add 0-5 comments per post
+    for (const post of createdPosts) {
+      const numComments = Math.floor(Math.random() * 6);
+      const community = createdCommunities.find(c => c._id.equals(post.communityId));
+      
+      if (!community) continue; // Skip if community not found
+      
+      // Get eligible commenters
+      const classStudents = students.filter(s => 
+        enrollments.some(e => e.classId.equals(community.classId) && e.studentId.equals(s._id))
+      );
+      const classTeachers = teachers.filter(t =>
+        teacherAssignments.some(ta => ta.classId.equals(community.classId) && ta.teacherId.equals(t._id))
+      );
+      const eligibleCommenters = [...classStudents, ...classTeachers];
+
+      // Skip if no eligible commenters
+      if (eligibleCommenters.length === 0) continue;
+
+      for (let i = 0; i < numComments; i++) {
+        const commenter = eligibleCommenters[Math.floor(Math.random() * eligibleCommenters.length)];
+        const commentContent = commentTemplates[Math.floor(Math.random() * commentTemplates.length)];
+        
+        const upvotes = Math.floor(Math.random() * 10);
+        const downvotes = Math.floor(Math.random() * 2);
+
+        forumComments.push({
+          postId: post._id,
+          parentCommentId: null,
+          content: commentContent,
+          authorId: commenter._id,
+          upvotes: upvotes,
+          downvotes: downvotes,
+          voteScore: upvotes - downvotes,
+          replyCount: 0,
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null,
+          createdAt: new Date(post.createdAt.getTime() + Math.random() * 24 * 60 * 60 * 1000),
+          updatedAt: new Date()
+        });
+      }
+    }
+
+    if (forumComments.length > 0) {
+      const createdComments = await ForumComment.insertMany(forumComments);
+      console.log(`✅ Created ${createdComments.length} forum comments`);
+
+      // Update post comment counts
+      for (const post of createdPosts) {
+        const commentCount = createdComments.filter(c => c.postId.equals(post._id)).length;
+        await ForumPost.updateOne(
+          { _id: post._id },
+          { $set: { commentCount } }
+        );
+      }
+    } else {
+      console.log(`✅ No comments created`);
+    }
+
     // Summary
-    console.log('\n' + '='.repeat(50));
+    console.log('\n' + '='.repeat(60));
     console.log('🎉 DATA SEEDING COMPLETED SUCCESSFULLY!');
-    console.log('='.repeat(50));
+    console.log('='.repeat(60));
     console.log(`\n📊 Summary:`);
     console.log(`   • School ID: ${SCHOOL_ID}`);
     console.log(`   • Students: ${students.length}`);
@@ -530,14 +975,29 @@ async function seedData() {
     console.log(`   • Published Courses: ${publishedCourses.length}`);
     console.log(`   • Student Enrollments: ${enrollments.length}`);
     console.log(`   • Teacher Assignments: ${teacherAssignments.length}`);
+    console.log(`   • Communities: ${createdCommunities.length} (${classes.length} class + ${courses.length} course)`);
+    console.log(`   • Forum Tags: ${createdTags.length}`);
+    console.log(`   • Forum Posts: ${createdPosts.length}`);
+    console.log(`   • Forum Comments: ${forumComments.length}`);
     
     console.log('\n📝 Sample Data:');
     console.log('\nClasses:');
     classes.forEach(cls => {
       const studentCount = enrollments.filter(e => e.classId.equals(cls._id)).length;
       const courseCount = courses.filter(c => c.classId.equals(cls._id)).length;
-      console.log(`   • ${cls.name} - ${studentCount} students, ${courseCount} courses`);
+      const classCommunities = createdCommunities.filter(com => com.classId.equals(cls._id));
+      const classPostsCount = createdPosts.filter(p => p.classId.equals(cls._id)).length;
+      console.log(`   • ${cls.name} - ${studentCount} students, ${courseCount} courses, ${classCommunities.length} communities, ${classPostsCount} posts`);
     });
+
+    console.log('\n💬 Forum Statistics:');
+    const classCommunities = createdCommunities.filter(c => c.type === 'class');
+    const courseCommunities = createdCommunities.filter(c => c.type === 'course');
+    console.log(`   • Class Communities: ${classCommunities.length}`);
+    console.log(`   • Course Communities: ${courseCommunities.length}`);
+    console.log(`   • Total Posts: ${createdPosts.length}`);
+    console.log(`   • Total Comments: ${forumComments.length}`);
+    console.log(`   • Average Posts per Community: ${(createdPosts.length / createdCommunities.length).toFixed(1)}`);
 
     console.log('\n✅ You can now test the forum and other features in the browser!\n');
 
@@ -551,10 +1011,12 @@ async function seedData() {
 (async () => {
   try {
     await connectDB();
+    await cleanupData();
     await seedData();
+    console.log('✨ All operations completed successfully!');
     process.exit(0);
   } catch (error) {
-    console.error('Fatal error:', error);
+    console.error('❌ Fatal error:', error);
     process.exit(1);
   }
 })();
