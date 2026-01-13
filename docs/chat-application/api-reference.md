@@ -400,6 +400,18 @@ Soft delete a message (sender only).
 
 ---
 
+## Message Reactions
+
+**Reactions are handled via Socket.IO events, not REST API.**
+
+See [Socket Events Documentation](./socket-events.md#reaction-events) for details on:
+- `reaction:add` - Add/change/toggle reaction
+- `reaction:remove` - Remove reaction
+- `reaction:updated` - Receive reaction updates
+- `reaction:error` - Handle errors
+
+Reactions are stored as embedded documents in the messages collection with aggregated counts for performance.
+
 ## Messaging Contacts API
 
 Base path: `/messaging-contacts`
@@ -590,6 +602,61 @@ Messages can be filtered by conversation:
 ```
 GET /messages?conversationId=conv123
 ```
+
+---
+
+## Real-Time Events (WebSocket)
+
+The chat application uses Socket.IO for real-time messaging. All events are sent over the `/chat-socket/` path with JWT authentication.
+
+### Connection
+
+```javascript
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:3030', {
+  path: '/chat-socket/',
+  query: { token: 'YOUR_JWT_TOKEN' }
+});
+```
+
+### Message Events
+
+#### `message:send` (Client → Server)
+Send a new message to another user.
+
+**Payload:** `{ recipientId: string, content: string, conversationId?: string, tempId?: string }`
+
+**Responses:** `message:delivered`, `message:error`
+
+#### `message:reply` (Client → Server)
+Send a reply to an existing message.
+
+**Payload:** `{ recipientId: string, content: string, conversationId: string, replyToMessageId: string, tempId?: string }`
+
+**Responses:** `message:delivered`, `message:reply:receive`, `message:error`
+
+#### `message:reply:receive` (Server → Client)
+Receive a reply message from another user.
+
+**Payload:** `{ id: string, from: string, to: string, content: string, timestamp: string, conversationId: string, reply: object }`
+
+#### `message:read` (Client → Server)
+Mark messages as read in a conversation.
+
+**Payload:** `{ conversationId: string }`
+
+**Responses:** Updates unread counts
+
+### Typing Events
+
+#### `typing:start` / `typing:stop`
+Indicate when user is typing in a conversation.
+
+### Presence Events
+
+#### User Online/Offline Status
+Automatic broadcasting when users connect/disconnect.
 
 ---
 

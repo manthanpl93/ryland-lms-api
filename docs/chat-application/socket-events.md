@@ -97,6 +97,46 @@ socket.emit('message:send', {
 
 ---
 
+#### `message:reply`
+
+Send a reply to an existing message.
+
+**Payload:**
+
+```typescript
+{
+  recipientId: string;        // Required: User ID of recipient
+  content: string;            // Required: Reply message content
+  conversationId: string;     // Required: Conversation ID
+  replyToMessageId: string;   // Required: ID of message being replied to
+  tempId?: string;           // Optional: Client-side temporary ID
+}
+```
+
+**Example:**
+
+```javascript
+socket.emit('message:reply', {
+  recipientId: 'user123',
+  content: 'Thanks for the info!',
+  conversationId: 'conv456',
+  replyToMessageId: 'msg789',
+  tempId: 'temp-reply-' + Date.now()
+});
+```
+
+**Server Responses:**
+- `message:delivered` - Reply was successfully sent
+- `message:error` - Failed to send reply
+
+**Error Cases:**
+- Original message not found
+- Original message is deleted
+- User not participant in conversation
+- Reply content empty/invalid
+
+---
+
 #### `message:read`
 
 Mark a message as read.
@@ -236,6 +276,67 @@ socket.emit('typing:stop', {
 
 ---
 
+### Reaction Events
+
+#### `reaction:add`
+
+Add, change, or toggle a reaction on a message.
+
+**Payload:**
+
+```typescript
+{
+  messageId: string;        // Required: Message ID to react to
+  reactionType: string;     // Required: Reaction type (thumbs_up, heart, laugh, surprised, sad)
+}
+```
+
+**Example:**
+
+```javascript
+socket.emit('reaction:add', {
+  messageId: 'msg789',
+  reactionType: 'thumbs_up'
+});
+```
+
+**Server Responses:**
+- `reaction:updated` - Reaction successfully processed
+- `reaction:error` - Failed to process reaction
+
+**Actions:**
+- **Add**: First reaction to a message
+- **Toggle**: Remove reaction if same type already exists
+- **Change**: Replace existing reaction with different type
+
+---
+
+#### `reaction:remove`
+
+Explicitly remove your reaction from a message.
+
+**Payload:**
+
+```typescript
+{
+  messageId: string;  // Required: Message ID to remove reaction from
+}
+```
+
+**Example:**
+
+```javascript
+socket.emit('reaction:remove', {
+  messageId: 'msg789'
+});
+```
+
+**Server Responses:**
+- `reaction:updated` - Reaction successfully removed
+- `reaction:error` - Failed to remove reaction
+
+---
+
 ## Server to Client Events
 
 Events that the server emits to clients.
@@ -323,6 +424,50 @@ Receive a new message from another user.
 socket.on('message:receive', (message) => {
   console.log('New message from', message.from, ':', message.content);
   // Add message to UI
+  // Send read receipt if user is viewing conversation
+  socket.emit('message:read', {
+    messageId: message.id,
+    senderId: message.from
+  });
+  });
+```
+
+---
+
+#### `message:reply:receive`
+
+Receive a reply message from another user.
+
+**Payload:**
+
+```typescript
+{
+  id: string;                 // Database message ID
+  tempId?: string;           // Client's temporary ID (if provided)
+  from: string;              // Sender user ID
+  to: string;                // Recipient user ID (you)
+  content: string;           // Reply content
+  timestamp: string;         // ISO 8601 timestamp
+  status: 'sent';            // Message status
+  conversationId: string;    // Conversation ID
+  reply: {                   // Reply metadata
+    messageId: string;       // Original message ID
+    content: string;         // Preview of original message (max 200 chars)
+    messageType: 'text';     // Type of original message
+    senderId: string;        // Original message sender ID
+  }
+}
+```
+
+**Example:**
+
+```javascript
+socket.on('message:reply:receive', (message) => {
+  console.log('New reply from', message.from, ':', message.content);
+  console.log('Replying to message:', message.reply.messageId);
+  console.log('Original content:', message.reply.content);
+
+  // Add reply message to UI with preview
   // Send read receipt if user is viewing conversation
   socket.emit('message:read', {
     messageId: message.id,
@@ -516,6 +661,91 @@ socket.on('typing:stop', (data) => {
 
 ---
 
+### Reaction Events
+
+#### `reaction:updated`
+
+Broadcast to all conversation participants when reactions change.
+
+**Payload:**
+
+```typescript
+{
+  messageId: string;        // Message ID that was updated
+  reactions: {              // Array of all reactions on the message
+    userId: string;         // User ID who reacted
+    reactionType: string;   // Type of reaction
+    createdAt: string;      // ISO 8601 timestamp
+  }[];
+  reactionCounts: {         // Aggregated counts for performance
+    thumbs_up: number;
+    heart: number;
+    laugh: number;
+    surprised: number;
+    sad: number;
+    total: number;
+  };
+  userId: string;           // User ID who made the change
+  action: string;           // Action type: 'added', 'changed', 'toggled', 'removed'
+}
+```
+
+**Example:**
+
+```javascript
+socket.on('reaction:updated', (data) => {
+  console.log('Reaction updated:', data.action, 'on message', data.messageId);
+
+  // Update message in UI with new reaction data
+  updateMessageReactions(data.messageId, data.reactions, data.reactionCounts);
+
+  // Show notification if reaction is from another user
+  if (data.userId !== currentUserId) {
+    showReactionNotification(data);
+  }
+});
+```
+
+**Actions:**
+- `added` - New reaction added
+- `changed` - Existing reaction changed to different type
+- `toggled` - Reaction removed (same type clicked again)
+- `removed` - Reaction explicitly removed
+
+---
+
+#### `reaction:error`
+
+Error occurred during a reaction operation.
+
+**Payload:**
+
+```typescript
+{
+  error: string;         // Error message
+  messageId?: string;    // Message ID (if applicable)
+  details?: string;      // Additional error details
+}
+```
+
+**Common Errors:**
+- "Not authorized to react to this message"
+- "Message not found"
+- "Cannot react to deleted message"
+- "Invalid reaction type. Must be one of: thumbs_up, heart, laugh, surprised, sad"
+
+**Example:**
+
+```javascript
+socket.on('reaction:error', (error) => {
+  console.error('Reaction error:', error.error);
+  // Show error notification to user
+  showNotification(error.error, 'error');
+});
+```
+
+---
+
 ## Event Flow Examples
 
 ### Sending a Message
@@ -559,7 +789,21 @@ Client A                Socket Server              Relevant Users
    |                          |-- broadcast ---------->|
 ```
 
+### Message Reactions
+
+```
+Client A                Socket Server              Client B
+   |                          |                        |
+   |-- reaction:add --------->|                        |
+   |                          |-- validate & update DB |
+   |                          |-- broadcast ---------->|
+   |<-- reaction:updated -----|                        |
+   |                          |<-- reaction:updated ---|
+```
+
 ---
+
+## Best Practices
 
 ## Best Practices
 
@@ -683,4 +927,128 @@ function markMessagesAsRead(messages) {
 3. **Lazy Loading**: Load message history on demand via REST API
 4. **Optimistic Updates**: Update UI immediately, rollback on error
 5. **Selective Listening**: Only listen to events for active conversations
+
+---
+
+## Troubleshooting
+
+### Issue: Reaction Events Not Being Received
+
+**Symptoms:**
+- Frontend emits `reaction:add` event successfully
+- Backend doesn't receive the event
+- No logs in backend handler
+- Other events (messages, typing) work fine
+
+**Root Cause:**
+Socket event handlers must be registered in `src/app.ts` where socket connections are actually established, not just in `src/socket/chatSocket.js`.
+
+**Solution:**
+Ensure all event handlers are imported and registered in `src/app.ts`:
+
+```typescript
+// 1. Import the handler
+import reactionHandler from "./socket/handlers/reactionHandler";
+
+// 2. Register it in the socket connection handler
+socket.on("connection", async (socket) => {
+  // ... authentication and setup code ...
+  
+  // Register ALL handlers
+  messageHandler(io, socket, connectionManager);
+  typingHandler(io, socket, connectionManager);
+  reactionHandler(io, socket, connectionManager);  // ⬅️ Must be registered here!
+  
+  console.log('✅ All handlers registered (message, typing, reaction)');
+});
+```
+
+**Key Points:**
+- The socket connection lifecycle is in `src/app.ts`, not `src/socket/chatSocket.js`
+- All handlers MUST be registered where sockets actually connect
+- If a handler is only in `chatSocket.js`, it will never be called
+- Verify handler registration by checking logs when socket connects
+
+**Fixed in:** January 2026
+
+### Frontend Socket Configuration
+
+**Correct Configuration:**
+```typescript
+// Frontend: lib/socket-holder.ts
+const socketOptions = {
+  transports: ['websocket'],
+  query: { token },
+  timeout: 20000,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  forceNew: true,
+  autoConnect: true
+  // ⚠️ Do NOT specify path here - backend handles it automatically
+};
+
+const socket = io(NEXT_PUBLIC_SOCKET_URL, socketOptions);
+```
+
+**Backend Configuration:**
+```javascript
+// Backend: src/socket/chatSocket.js
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    credentials: true,
+  },
+  maxHttpBufferSize: 1e8,
+  transports: ["websocket", "polling"],
+  path: "/chat-socket/",  // Server defines the path
+});
+```
+
+### Message Reaction Data Structure
+
+All messages must initialize reaction properties, even if empty:
+
+```typescript
+// Frontend: Correct message initialization
+const message: Message = {
+  id: '...',
+  // ... other properties ...
+  reactions: [],  // Always initialize
+  reactionCounts: {
+    thumbs_up: 0,
+    heart: 0,
+    laugh: 0,
+    surprised: 0,
+    sad: 0,
+    total: 0,
+  },
+};
+```
+
+**Locations to Initialize:**
+1. `lib/api/messages-api.ts` - `transformMessage()` function
+2. `store/messaging-store.ts` - `sendMessage()` function
+3. `store/messaging-store.ts` - `handleMessageReceive()` function
+4. `store/messaging-store.ts` - `handleMessageReplyReceive()` function
+
+---
+
+## Architecture Notes
+
+### Socket Connection Flow
+
+```
+1. Client connects → src/app.ts (Socket.IO middleware)
+                   ↓
+2. Authentication → src/socket/chatAuth.js
+                   ↓
+3. Connection established → io.on("connection") in src/app.ts
+                   ↓
+4. Handlers registered → messageHandler, typingHandler, reactionHandler
+                   ↓
+5. Events received → Handlers process events
+```
+
+**Important:** All event handlers MUST be registered in `src/app.ts` within the `io.on("connection")` callback. Handlers registered elsewhere will not receive events.
 

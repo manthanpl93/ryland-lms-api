@@ -3,6 +3,7 @@ const authenticateSocket = require("./chatAuth");
 const connectionManager = require("./connectionManager");
 const messageHandler = require("./handlers/messageHandler");
 const typingHandler = require("./handlers/typingHandler");
+const reactionHandler = require("./handlers/reactionHandler");
 const { EVENT_GROUPS } = require("./constants/events");
 
 /**
@@ -33,7 +34,6 @@ function initializeSocketServer(app) {
   // Connection handler
   io.on("connection", async (socket) => {
     const user = socket.user;
-    console.log(`Chat: User connected: ${user._id} (Socket: ${socket.id})`);
 
     try {
       // Query classIds based on role
@@ -47,32 +47,44 @@ function initializeSocketServer(app) {
 
       if (userRoleLower === "teacher") {
         console.log(`Chat: Querying teacher classes for user ${user._id}`);
-        const teacherClasses = await app.service("class-teachers").find({
-          query: {
-            teacherId: user._id,
-            isActive: true,
-            $select: ["classId"],
-          },
-          paginate: false,
-        });
-        classIds = teacherClasses.map((tc) => tc.classId.toString());
-        console.log(
-          `Chat: Found ${classIds.length} classes for teacher ${user._id}`
-        );
+        try {
+          const teacherClasses = await app.service("class-teachers").find({
+            query: {
+              teacherId: user._id,
+              isActive: true,
+              $select: ["classId"],
+            },
+            paginate: false,
+            provider: "socketio", // Bypass auth since socket is already authenticated
+          });
+          classIds = teacherClasses.map((tc) => tc.classId.toString());
+          console.log(
+            `Chat: Found ${classIds.length} classes for teacher ${user._id}`
+          );
+        } catch (error) {
+          console.log(`Chat: Error querying teacher classes: ${error.message}`);
+        }
       } else if (userRoleLower === "student") {
         console.log(`Chat: Querying student enrollments for user ${user._id}`);
-        const enrollments = await app.service("class-enrollments").find({
-          query: {
-            studentId: user._id,
-            status: "Active",
-            $select: ["classId"],
-          },
-          paginate: false,
-        });
-        classIds = enrollments.map((e) => e.classId.toString());
-        console.log(
-          `Chat: Found ${classIds.length} classes for student ${user._id}`
-        );
+        try {
+          const enrollments = await app.service("class-enrollments").find({
+            query: {
+              studentId: user._id,
+              status: "Active",
+              $select: ["classId"],
+            },
+            paginate: false,
+            provider: "socketio", // Bypass auth since socket is already authenticated
+          });
+          classIds = enrollments.map((e) => e.classId.toString());
+          console.log(
+            `Chat: Found ${classIds.length} classes for student ${user._id}`
+          );
+        } catch (error) {
+          console.log(
+            `Chat: Error querying student enrollments: ${error.message}`
+          );
+        }
       } else {
         console.log(
           `Chat: Role "${user.role}" is not teacher or student - no classes to query`
@@ -101,12 +113,10 @@ function initializeSocketServer(app) {
       // Register event handlers
       messageHandler(io, socket, connectionManager);
       typingHandler(io, socket, connectionManager);
+      reactionHandler(io, socket, connectionManager);
 
       // Handle disconnection
       socket.on("disconnect", () => {
-        console.log(
-          `Chat: User disconnected: ${user._id} (Socket: ${socket.id})`
-        );
 
         // Check if this was the last connection
         const wasLastConnection =
@@ -139,7 +149,6 @@ function initializeSocketServer(app) {
     }
   });
 
-  console.log("✅ Socket.IO chat server initialized");
   return io;
 }
 

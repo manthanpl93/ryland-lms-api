@@ -142,6 +142,142 @@ function messageHandler(io, socket, connectionManager) {
   });
 
   /**
+   * Handle message:reply event
+   * Client sends a reply to an existing message
+   * @param {MessageReplyPayload} data - Reply message payload
+   */
+  socket.on(MESSAGE.REPLY, async (data) => {
+    try {
+      const { recipientId, content, replyToMessageId, conversationId, tempId } = data;
+
+      // Validate required fields
+      if (!recipientId || !content || !replyToMessageId || !conversationId) {
+        socket.emit(MESSAGE.ERROR, {
+          error: "Missing required fields: recipientId, content, replyToMessageId, conversationId",
+          tempId,
+        });
+        return;
+      }
+
+      // Check if recipient is online
+      const recipientOnline = connectionManager.isUserOnline(recipientId);
+
+      // Fetch the original message to get preview content
+      const originalMessage = await Message.findById(replyToMessageId);
+      if (!originalMessage) {
+        socket.emit(MESSAGE.ERROR, {
+          error: "Original message not found",
+          tempId,
+        });
+        return;
+      }
+
+      // Validate that the original message is not deleted
+      if (originalMessage.isDeleted) {
+        socket.emit(MESSAGE.ERROR, {
+          error: "Cannot reply to deleted message",
+          tempId,
+        });
+        return;
+      }
+
+      // Verify user has access to the original message (same conversation)
+      if (originalMessage.conversationId.toString() !== conversationId) {
+        socket.emit(MESSAGE.ERROR, {
+          error: "Cannot reply to message from different conversation",
+          tempId,
+        });
+        return;
+      }
+
+      // ✅ PERSIST TO DATABASE using Model directly
+      const savedMessage = await Message.create({
+        conversationId: conversationId,
+        senderId: socket.user._id,
+        recipientId,
+        content: content.trim(),
+        status: {
+          delivered: false,
+          read: false,
+        },
+        reply: {
+          messageId: replyToMessageId,
+          content: originalMessage.content.length > 200
+            ? originalMessage.content.substring(0, 200) + "..."
+            : originalMessage.content,
+          messageType: 'text',
+          senderId: originalMessage.senderId
+        },
+      });
+
+      // Update conversation's last message
+      await Conversation.findByIdAndUpdate(conversationId, {
+        lastMessage: {
+          content: content.trim(),
+          senderId: socket.user._id,
+          timestamp: savedMessage.createdAt,
+        },
+        lastMessageAt: savedMessage.createdAt,
+        $inc: {
+          [`unreadCount.${recipientId}`]: 1,
+        },
+      });
+
+      // Create socket message object from saved message
+      const message = {
+        id: savedMessage._id.toString(),
+        tempId, // Client's temporary ID for optimistic updates
+        from: socket.user._id,
+        to: recipientId,
+        content: savedMessage.content,
+        timestamp: savedMessage.createdAt,
+        status: "sent",
+        conversationId: conversationId,
+        reply: savedMessage.reply,
+        senderName: `${socket.user.firstName} ${socket.user.lastName}`,
+        senderAvatar: socket.user.avatar,
+      };
+
+      console.log(
+        `Reply sent: ${socket.user._id} -> ${recipientId} (DB ID: ${message.id})`
+      );
+
+      // Send to recipient if online
+      if (recipientOnline) {
+        console.log(`📤 Emitting message:reply:receive to recipient ${recipientId}`);
+        connectionManager.emitToUser(recipientId, MESSAGE.REPLY_RECEIVE, message);
+
+        // Mark as delivered in database if recipient is online
+        await Message.findByIdAndUpdate(savedMessage._id, {
+          "status.delivered": true,
+          "status.deliveredAt": new Date(),
+        });
+        console.log(`✅ Reply marked as delivered in database`);
+      } else {
+        console.log(
+          `⚠️ Recipient ${recipientId} is offline - reply not sent via socket`
+        );
+      }
+
+      // Confirm delivery to sender (sender already has optimistic message)
+      socket.emit(MESSAGE.DELIVERED, {
+        messageId: message.id,
+        tempId: message.tempId,
+        timestamp: message.timestamp,
+        recipientOnline,
+        conversationId: message.conversationId,
+      });
+    } catch (error) {
+      console.error("Error handling message:reply:", error);
+      socket.emit(MESSAGE.ERROR, {
+        error: "Failed to send reply",
+        tempId: data.tempId,
+        details: error.message,
+      });
+    }
+  });
+
+  /**
    * Handle message:read event
    * Client opens conversation - mark all unread messages as read
    */

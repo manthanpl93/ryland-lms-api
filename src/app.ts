@@ -36,6 +36,8 @@ import messageHandler from "./socket/handlers/messageHandler";
 // @ts-expect-error - CommonJS modules for chat socket
 import typingHandler from "./socket/handlers/typingHandler";
 // @ts-expect-error - CommonJS modules for chat socket
+import reactionHandler from "./socket/handlers/reactionHandler";
+// @ts-expect-error - CommonJS modules for chat socket
 import { EVENT_GROUPS } from "./socket/constants/events";
 
 const app: Application = express(feathers());
@@ -89,153 +91,168 @@ app.configure(middleware);
 app.configure(authentication);
 
 app.configure(
-  socketio({ maxHttpBufferSize: 5 * 1e9 }, function (io) {
-    // Store app reference for chat handlers to access services
-    (io as any).app = app;
-    
-    io.use(async function (socket: CustomSocket, next) {
-      try {
-        if (!socket?.handshake?.query?.token) {
-          console.log("❌ Socket authentication failed: No token provided");
-          return next(new Error("Authentication token required"));
+  socketio(
+    {
+      maxHttpBufferSize: 5 * 1e9,
+      transports: ["websocket", "polling"],
+    } as any,
+    function (io) {
+      // Store app reference for chat handlers to access services
+      (io as any).app = app;
+
+      io.use(async function (socket: CustomSocket, next) {
+        try {
+          if (!socket?.handshake?.query?.token) {
+            return next(new Error("Authentication token required"));
+          }
+
+          const result = await app
+            .service("authentication")
+            .verifyAccessToken(socket?.handshake?.query?.token);
+
+          if (!result || !result.sub) {
+            return next(new Error("Invalid authentication token"));
+          }
+
+          const user = await app.service("users").get(result.sub);
+          if (!user) {
+            return next(new Error("User not found"));
+          }
+
+          socket.handshake.query.user = user;
+          next();
+        } catch (e: any) {
+          return next(
+            new Error(
+              "Authentication failed: " + (e?.message || "Unknown error")
+            )
+          );
         }
+      });
 
-        const result = await app
-          .service("authentication")
-          .verifyAccessToken(socket?.handshake?.query?.token);
+      io.on("connection", function (socket: CustomSocket) {
+        if (socket?.handshake?.query?.user) {
+          const user = socket.handshake.query.user;
+          const socketId = socket.id;
+          const userId = user._id.toString();
 
-        if (!result || !result.sub) {
-          console.log("❌ Socket authentication failed: Invalid token");
-          return next(new Error("Invalid authentication token"));
-        }
+          setSocketById(socketId, socket);
+          addSocketToUser(userId, socket);
+          initializeEvents(socket, io, app);
 
-        const user = await app.service("users").get(result.sub);
-        if (!user) {
-          console.log("❌ Socket authentication failed: User not found");
-          return next(new Error("User not found"));
-        }
+          // Initialize chat messaging handlers
+          socket.user = user; // Add user to socket for chat handlers
 
-        console.log(`✅ Socket authenticated: ${user.email} (${user._id})`);
+          // Query classIds based on role for chat
+          (async () => {
+            try {
+              let classIds: string[] = [];
 
-        socket.handshake.query.user = user;
-        next();
-      } catch (e: any) {
-        console.error(`❌ Socket authentication failed: ${e?.message || "Unknown error"}`);
-        return next(
-          new Error("Authentication failed: " + (e?.message || "Unknown error"))
-        );
-      }
-    });
+              // Normalize role to lowercase for comparison
+              const userRoleLower = (user.role || "").toLowerCase();
 
-    io.on("connection", function (socket: CustomSocket) {
-      if (socket?.handshake?.query?.user) {
-        const user = socket.handshake.query.user;
-        const socketId = socket.id;
-        const userId = user._id.toString();
+              if (userRoleLower === "teacher") {
+                const teacherClasses = await app
+                  .service("class-teachers")
+                  .find({
+                    query: {
+                      teacherId: userId,
+                      isActive: true,
+                      $select: ["classId"],
+                    },
+                    paginate: false,
+                    user: user,
+                  });
+                classIds = teacherClasses.map((tc: any) =>
+                  tc.classId.toString()
+                );
+              } else if (userRoleLower === "student") {
+                const enrollments = await app
+                  .service("class-enrollments")
+                  .find({
+                    query: {
+                      studentId: userId,
+                      status: "Active",
+                      $select: ["classId"],
+                    },
+                    paginate: false,
+                    user: user,
+                  });
+                classIds = enrollments.map((e: any) => e.classId.toString());
+              }
 
-        setSocketById(socketId, socket);
-        addSocketToUser(userId, socket);
-        initializeEvents(socket, io, app);
-
-        // Initialize chat messaging handlers
-        socket.user = user; // Add user to socket for chat handlers
-        
-        // Query classIds based on role for chat
-        (async () => {
-          try {
-            let classIds: string[] = [];
-            
-            // Normalize role to lowercase for comparison
-            const userRoleLower = (user.role || "").toLowerCase();
-
-            if (userRoleLower === "teacher") {
-              const teacherClasses = await app.service("class-teachers").find({
-                query: {
-                  teacherId: userId,
-                  isActive: true,
-                  $select: ["classId"],
-                },
-                paginate: false,
-                user: user,
-              });
-              classIds = teacherClasses.map((tc: any) => tc.classId.toString());
-            } else if (userRoleLower === "student") {
-              const enrollments = await app.service("class-enrollments").find({
-                query: {
-                  studentId: userId,
-                  status: "Active",
-                  $select: ["classId"],
-                },
-                paginate: false,
-                user: user,
-              });
-              classIds = enrollments.map((e: any) => e.classId.toString());
-            }
-
-            // Add connection to chat connection manager
-            connectionManager.addConnection(userId, socket, {
-              userRole: user.role,
-              schoolId: user.schoolId?.toString(),
-              classIds: classIds,
-            });
-            
-            console.log(`✅ Connection added: ${user.email} (${userId})`);
-
-            // Get broadcast targets and notify
-            const targets = connectionManager.getBroadcastTargetsForUser(userId);
-            targets.forEach((targetUserId: string) => {
-              connectionManager.emitToUser(targetUserId, EVENT_GROUPS.USER.ONLINE, {
-                userId: userId,
+              // Add connection to chat connection manager
+              connectionManager.addConnection(userId, socket, {
                 userRole: user.role,
-                timestamp: new Date().toISOString(),
+                schoolId: user.schoolId?.toString(),
+                classIds: classIds,
               });
-            });
 
-            // Register chat message and typing handlers
-            messageHandler(io, socket, connectionManager);
-            typingHandler(io, socket, connectionManager);
-          } catch (error: any) {
-            console.error(`❌ Error initializing chat handlers: ${error.message}`);
-          }
-        })();
-        
-        // Handle disconnect for chat
-        socket.on("disconnect", () => {
-          // Check if this was the last connection
-          const wasLastConnection =
-            connectionManager.getUserSockets(userId).length === 1;
+              // Get broadcast targets and notify
+              const targets =
+                connectionManager.getBroadcastTargetsForUser(userId);
+              targets.forEach((targetUserId: string) => {
+                connectionManager.emitToUser(
+                  targetUserId,
+                  EVENT_GROUPS.USER.ONLINE,
+                  {
+                    userId: userId,
+                    userRole: user.role,
+                    timestamp: new Date().toISOString(),
+                  }
+                );
+              });
 
-          connectionManager.removeConnection(userId, socket.id);
-
-          // Broadcast user offline status if no more connections
-          if (wasLastConnection) {
-            const targets = connectionManager.getBroadcastTargetsForUser(userId);
-            targets.forEach((targetUserId: string) => {
-              connectionManager.emitToUser(
-                targetUserId,
-                EVENT_GROUPS.USER.OFFLINE,
-                {
-                  userId: userId,
-                  timestamp: new Date().toISOString(),
-                }
+              // Register chat message and typing handlers
+              messageHandler(io, socket, connectionManager);
+              typingHandler(io, socket, connectionManager);
+              reactionHandler(io, socket, connectionManager);
+            } catch (error: any) {
+              console.error(
+                `Error initializing chat handlers: ${error.message}`
               );
-            });
-          }
-        });
-      } else {
-        socket.on("workerConnectionRequest", (data: any) => {
-          const workerToken = app.get("workerSocketToken");
-          const { token } = data;
-          if (workerToken === token) {
-            setWorkerSocket(socket);
-            initializeWorkerSocketEvents(socket);
-          } else {
-            socket.disconnect();
-          }
-        });
-      }
-    });
-  })
+            }
+          })();
+
+          // Handle disconnect for chat
+          socket.on("disconnect", () => {
+            // Check if this was the last connection
+            const wasLastConnection =
+              connectionManager.getUserSockets(userId).length === 1;
+
+            connectionManager.removeConnection(userId, socket.id);
+
+            // Broadcast user offline status if no more connections
+            if (wasLastConnection) {
+              const targets =
+                connectionManager.getBroadcastTargetsForUser(userId);
+              targets.forEach((targetUserId: string) => {
+                connectionManager.emitToUser(
+                  targetUserId,
+                  EVENT_GROUPS.USER.OFFLINE,
+                  {
+                    userId: userId,
+                    timestamp: new Date().toISOString(),
+                  }
+                );
+              });
+            }
+          });
+        } else {
+          socket.on("workerConnectionRequest", (data: any) => {
+            const workerToken = app.get("workerSocketToken");
+            const { token } = data;
+            if (workerToken === token) {
+              setWorkerSocket(socket);
+              initializeWorkerSocketEvents(socket);
+            } else {
+              socket.disconnect();
+            }
+          });
+        }
+      });
+    }
+  )
 );
 
 // Set up our services (see `services/index.ts`)

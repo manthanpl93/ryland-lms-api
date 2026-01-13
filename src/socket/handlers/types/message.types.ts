@@ -54,3 +54,28 @@ export interface MessageErrorPayload {
   messageId?: string;
   tempId?: string;
 }
+
+export interface MessageReplyPayload {
+  conversationId: string;
+  recipientId: string;
+  content: string;
+  replyToMessageId: string; // ID of message being replied to
+  tempId?: string;
+}
+
+export interface MessageReplyReceive {
+  id: string;
+  tempId?: string;
+  from: string;
+  to: string;
+  content: string;
+  timestamp: string;
+  status: "sent" | "delivered" | "read";
+  conversationId: string;
+  reply: {
+    messageId: string;
+    content: string; // Truncated preview (max 200 chars)
+    messageType: "text";
+    senderId: string;
+  };
+}

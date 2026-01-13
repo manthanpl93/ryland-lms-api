@@ -13,6 +13,8 @@ const EVENT_GROUPS = {
   MESSAGE: {
     SEND: "message:send", // Client sends message
     RECEIVE: "message:receive", // Client receives message
+    REPLY: "message:reply", // Client sends reply
+    REPLY_RECEIVE: "message:reply:receive", // Client receives reply
     DELIVERED: "message:delivered", // Message delivered confirmation
     READ: "message:read", // Message read confirmation
     UPDATE: "message:update", // Update existing message
@@ -25,6 +27,14 @@ const EVENT_GROUPS = {
     START: "typing:start", // User started typing
     STOP: "typing:stop", // User stopped typing
   },
+
+  // Reaction events
+  REACTION: {
+    ADD: "reaction:add",        // Client adds/changes reaction
+    REMOVE: "reaction:remove",  // Client removes reaction
+    UPDATED: "reaction:updated", // Server broadcasts update
+    ERROR: "reaction:error"      // Reaction operation error
+  },
 };
 
 /**
@@ -33,11 +43,14 @@ const EVENT_GROUPS = {
  */
 const CLIENT_TO_SERVER = [
   EVENT_GROUPS.MESSAGE.SEND,
+  EVENT_GROUPS.MESSAGE.REPLY,
   EVENT_GROUPS.MESSAGE.READ,
   EVENT_GROUPS.MESSAGE.UPDATE,
   EVENT_GROUPS.MESSAGE.DELETE,
   EVENT_GROUPS.TYPING.START,
   EVENT_GROUPS.TYPING.STOP,
+  EVENT_GROUPS.REACTION.ADD,
+  EVENT_GROUPS.REACTION.REMOVE,
 ];
 
 /**
@@ -48,6 +61,7 @@ const SERVER_TO_CLIENT = [
   EVENT_GROUPS.USER.ONLINE,
   EVENT_GROUPS.USER.OFFLINE,
   EVENT_GROUPS.MESSAGE.RECEIVE,
+  EVENT_GROUPS.MESSAGE.REPLY_RECEIVE,
   EVENT_GROUPS.MESSAGE.DELIVERED,
   EVENT_GROUPS.MESSAGE.READ,
   EVENT_GROUPS.MESSAGE.UPDATE,
@@ -55,6 +69,8 @@ const SERVER_TO_CLIENT = [
   EVENT_GROUPS.MESSAGE.ERROR,
   EVENT_GROUPS.TYPING.START,
   EVENT_GROUPS.TYPING.STOP,
+  EVENT_GROUPS.REACTION.UPDATED,
+  EVENT_GROUPS.REACTION.ERROR,
 ];
 
 module.exports = {

@@ -13,6 +13,7 @@ The Ryland LMS Chat Application is a real-time messaging system that enables 1-o
 - ✅ Offline message delivery (via REST API)
 - ✅ Read receipts and delivery confirmations
 - ✅ Message editing and deletion (soft delete)
+- ✅ Message reactions (thumbs_up, heart, laugh, surprised, sad)
 - ✅ Typing indicators
 - ✅ User presence tracking (online/offline)
 - ✅ School-aware presence broadcasting

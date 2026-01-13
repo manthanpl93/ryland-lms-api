@@ -167,8 +167,14 @@ Stores individual chat messages with status tracking and edit history.
 | `isDeleted` | Boolean | No | false | Soft delete flag |
 | `deletedAt` | Date | No | - | When message was deleted |
 | `deletedBy` | ObjectId | No | - | User who deleted message |
+| `reply.messageId` | ObjectId | No* | - | Reference to original message |
+| `reply.content` | String | No* | - | Cached preview (max 200 chars) |
+| `reply.messageType` | String | No* | 'text' | Type of original message |
+| `reply.senderId` | ObjectId | No* | - | Original message sender ID |
 | `createdAt` | Date | Yes | Auto | When message was created |
 | `updatedAt` | Date | Yes | Auto | When message was last updated |
+
+*Required if reply object exists
 
 #### Indexes
 
@@ -277,6 +283,38 @@ message.recipient → User
   "deletedBy": "507f1f77bcf86cd799439011",
   "createdAt": "2025-12-16T15:30:00.000Z",
   "updatedAt": "2025-12-16T16:00:00.000Z"
+}
+```
+
+#### Example: Reply Message
+
+```json
+{
+  "_id": "657c3d4e5f6g7h8i9j0k1l2m",
+  "conversationId": "657a1b2c3d4e5f6g7h8i9j0k",
+  "senderId": "507f191e810c19729de860ea",
+  "recipientId": "507f1f77bcf86cd799439011",
+  "content": "You're welcome! Happy to help.",
+  "status": {
+    "delivered": true,
+    "deliveredAt": "2025-12-16T15:40:01.000Z",
+    "read": false,
+    "readAt": null
+  },
+  "isEdited": false,
+  "editedAt": null,
+  "originalContent": null,
+  "isDeleted": false,
+  "deletedAt": null,
+  "deletedBy": null,
+  "reply": {
+    "messageId": "657b2c3d4e5f6g7h8i9j0k1l",
+    "content": "Thanks for all your help today!",
+    "messageType": "text",
+    "senderId": "507f1f77bcf86cd799439011"
+  },
+  "createdAt": "2025-12-16T15:40:00.000Z",
+  "updatedAt": "2025-12-16T15:40:01.000Z"
 }
 ```
 
