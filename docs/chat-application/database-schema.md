@@ -2,7 +2,7 @@
 
 ## Overview
 
-The chat application uses MongoDB for persistent storage with two main collections: `conversations` and `messages`. Both collections use Mongoose ODM for schema definition and validation.
+The chat application uses MongoDB for persistent storage with three main collections: `conversations`, `messages`, and `conversation-attachments`. All collections use Mongoose ODM for schema definition and validation.
 
 ## Collections
 
@@ -143,6 +143,19 @@ Stores individual chat messages with status tracking and edit history.
   isDeleted: Boolean,               // Soft delete flag (default: false)
   deletedAt: Date,                  // When deleted
   deletedBy: ObjectId,              // User who deleted
+  attachments: [{                   // Array of file/link attachments
+    _id: ObjectId,                  // Unique attachment identifier
+    type: String,                   // 'image', 'link', or 'document'
+    url: String,                    // S3 URL or external URL
+    metadata: Object,               // Type-specific metadata
+    uploadedAt: Date                // When attachment was added
+  }],
+  reply: {                          // Reply metadata (optional)
+    messageId: ObjectId,            // Reference to original message
+    content: String,                // Cached preview (max 200 chars)
+    messageType: String,            // Type of original message
+    senderId: ObjectId              // Original message sender
+  },
   createdAt: Date,                  // Auto-generated (Mongoose timestamp)
   updatedAt: Date                   // Auto-generated (Mongoose timestamp)
 }

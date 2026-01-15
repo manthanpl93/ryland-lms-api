@@ -1,5 +1,12 @@
 const { EVENT_GROUPS } = require("../constants/events");
 const { findOrCreateConversation } = require("../helpers/conversationHelper");
+// Temporarily disabled due to missing dependencies
+// const {
+//   processImageAttachments,
+//   extractLinkPreviews,
+//   validateAttachment,
+//   createConversationAttachments
+// } = require("../helpers/attachmentHelper");
 
 const { MESSAGE } = EVENT_GROUPS;
 
@@ -19,7 +26,7 @@ function messageHandler(io, socket, connectionManager) {
    */
   socket.on(MESSAGE.SEND, async (data) => {
     try {
-      const { recipientId, content, tempId, conversationId } = data;
+      const { recipientId, content, tempId, conversationId, attachments } = data;
       console.log("Message Send Event:", data);
       // Validate input
       if (!recipientId || !content) {
@@ -28,6 +35,21 @@ function messageHandler(io, socket, connectionManager) {
           tempId,
         });
         return;
+      }
+
+      // Validate attachments if provided
+      let validatedAttachments = [];
+      if (attachments && Array.isArray(attachments)) {
+        for (const attachment of attachments) {
+          if (!validateAttachment(attachment)) {
+            socket.emit(MESSAGE.ERROR, {
+              error: "Invalid attachment structure",
+              tempId,
+            });
+            return;
+          }
+        }
+        validatedAttachments = attachments;
       }
 
       // Check if recipient is online
@@ -58,8 +80,21 @@ function messageHandler(io, socket, connectionManager) {
         );
       }
 
+      // Process image attachments (generate thumbnails)
+      const processedAttachments = await processImageAttachments(
+        validatedAttachments,
+        io.app,
+        socket.user
+      );
+
+      // Extract link previews from content if no link attachments provided
+      const linkAttachments = await extractLinkPreviews(content, processedAttachments);
+      
+      // Combine all attachments
+      const allAttachments = [...processedAttachments, ...linkAttachments];
+
       // ✅ PERSIST TO DATABASE using Model directly
-      const savedMessage = await Message.create({
+      const messageData = {
         conversationId: conversation._id,
         senderId: socket.user._id,
         recipientId,
@@ -68,8 +103,26 @@ function messageHandler(io, socket, connectionManager) {
           delivered: false,
           read: false,
         },
-      });
+      };
+
+      // Add attachments if any
+      if (allAttachments.length > 0) {
+        messageData.attachments = allAttachments;
+      }
+
+      const savedMessage = await Message.create(messageData);
       console.log("Saved Message:", savedMessage);
+
+      // Create conversation-attachments records
+      if (savedMessage.attachments && savedMessage.attachments.length > 0) {
+        await createConversationAttachments(
+          savedMessage.attachments,
+          conversation._id.toString(),
+          savedMessage._id.toString(),
+          socket.user._id.toString(),
+          io.app
+        );
+      }
 
       // Update conversation's last message
       await Conversation.findByIdAndUpdate(conversation._id, {
@@ -96,6 +149,7 @@ function messageHandler(io, socket, connectionManager) {
         conversationId: conversation._id.toString(),
         senderName: `${socket.user.firstName} ${socket.user.lastName}`,
         senderAvatar: socket.user.avatar,
+        attachments: savedMessage.attachments || [],
       };
 
       console.log(
@@ -130,6 +184,7 @@ function messageHandler(io, socket, connectionManager) {
         timestamp: message.timestamp,
         recipientOnline,
         conversationId: message.conversationId,
+        attachments: savedMessage.attachments || [],
       });
     } catch (error) {
       console.error("Error handling message:send:", error);
@@ -148,7 +203,7 @@ function messageHandler(io, socket, connectionManager) {
    */
   socket.on(MESSAGE.REPLY, async (data) => {
     try {
-      const { recipientId, content, replyToMessageId, conversationId, tempId } = data;
+      const { recipientId, content, replyToMessageId, conversationId, tempId, attachments } = data;
 
       // Validate required fields
       if (!recipientId || !content || !replyToMessageId || !conversationId) {
@@ -157,6 +212,21 @@ function messageHandler(io, socket, connectionManager) {
           tempId,
         });
         return;
+      }
+
+      // Validate attachments if provided
+      let validatedAttachments = [];
+      if (attachments && Array.isArray(attachments)) {
+        for (const attachment of attachments) {
+          if (!validateAttachment(attachment)) {
+            socket.emit(MESSAGE.ERROR, {
+              error: "Invalid attachment structure",
+              tempId,
+            });
+            return;
+          }
+        }
+        validatedAttachments = attachments;
       }
 
       // Check if recipient is online
@@ -190,8 +260,21 @@ function messageHandler(io, socket, connectionManager) {
         return;
       }
 
+      // Process image attachments (generate thumbnails)
+      const processedAttachments = await processImageAttachments(
+        validatedAttachments,
+        io.app,
+        socket.user
+      );
+
+      // Extract link previews from content if no link attachments provided
+      const linkAttachments = await extractLinkPreviews(content, processedAttachments);
+      
+      // Combine all attachments
+      const allAttachments = [...processedAttachments, ...linkAttachments];
+
       // ✅ PERSIST TO DATABASE using Model directly
-      const savedMessage = await Message.create({
+      const messageData = {
         conversationId: conversationId,
         senderId: socket.user._id,
         recipientId,
@@ -208,7 +291,25 @@ function messageHandler(io, socket, connectionManager) {
           messageType: 'text',
           senderId: originalMessage.senderId
         },
-      });
+      };
+
+      // Add attachments if any
+      if (allAttachments.length > 0) {
+        messageData.attachments = allAttachments;
+      }
+
+      const savedMessage = await Message.create(messageData);
+
+      // Create conversation-attachments records
+      if (savedMessage.attachments && savedMessage.attachments.length > 0) {
+        await createConversationAttachments(
+          savedMessage.attachments,
+          conversationId,
+          savedMessage._id.toString(),
+          socket.user._id.toString(),
+          io.app
+        );
+      }
 
       // Update conversation's last message
       await Conversation.findByIdAndUpdate(conversationId, {
@@ -234,6 +335,7 @@ function messageHandler(io, socket, connectionManager) {
         status: "sent",
         conversationId: conversationId,
         reply: savedMessage.reply,
+        attachments: savedMessage.attachments || [],
         senderName: `${socket.user.firstName} ${socket.user.lastName}`,
         senderAvatar: socket.user.avatar,
       };
@@ -266,6 +368,7 @@ function messageHandler(io, socket, connectionManager) {
         timestamp: message.timestamp,
         recipientOnline,
         conversationId: message.conversationId,
+        attachments: savedMessage.attachments || [],
       });
     } catch (error) {
       console.error("Error handling message:reply:", error);
@@ -492,6 +595,52 @@ function messageHandler(io, socket, connectionManager) {
         error: "Failed to delete message",
         messageId: data.messageId,
         details: error.message,
+      });
+    }
+  });
+
+  /**
+   * Handle message:link-preview event
+   * Client requests link preview before sending message
+   */
+  socket.on(MESSAGE.LINK_PREVIEW, async (data) => {
+    try {
+      const { url, tempId } = data;
+
+      if (!url) {
+        socket.emit(MESSAGE.LINK_PREVIEW_RESULT, {
+          tempId,
+          error: "URL is required",
+        });
+        return;
+      }
+
+      console.log(`Fetching link preview for: ${url}`);
+
+      // Import fetchLinkPreview utility
+      const { fetchLinkPreview } = require("../../utils/link-preview");
+
+      // Fetch preview with timeout
+      const preview = await fetchLinkPreview(url, 5000);
+
+      // Send preview data back to client
+      socket.emit(MESSAGE.LINK_PREVIEW_RESULT, {
+        tempId,
+        preview: {
+          title: preview.title,
+          description: preview.description,
+          image: preview.image,
+          siteName: preview.siteName,
+          url: preview.url,
+        },
+      });
+
+      console.log(`Link preview fetched successfully for: ${url}`);
+    } catch (error) {
+      console.error("Error fetching link preview:", error);
+      socket.emit(MESSAGE.LINK_PREVIEW_RESULT, {
+        tempId: data.tempId,
+        error: error.message || "Failed to fetch link preview",
       });
     }
   });

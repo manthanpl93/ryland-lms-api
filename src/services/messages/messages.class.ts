@@ -52,7 +52,7 @@ export class Messages extends Service {
   }
 
   async create(data: any, params?: Params): Promise<any> {
-    const { conversationId, content, recipientId } = data;
+    const { conversationId, content, recipientId, attachments, reply } = data;
     const senderId = params?.user?._id;
 
     if (!conversationId || !content || !recipientId) {
@@ -74,8 +74,23 @@ export class Messages extends Service {
       throw new Forbidden("Not a participant in conversation");
     }
 
-    // Create message
-    const message = await this.Model.create({
+    // Validate attachments if provided
+    if (attachments && Array.isArray(attachments)) {
+      for (const attachment of attachments) {
+        if (!attachment.type || !["image", "link", "document"].includes(attachment.type)) {
+          throw new BadRequest("Invalid attachment type");
+        }
+        if (!attachment.url) {
+          throw new BadRequest("Attachment must have a URL");
+        }
+        if (!attachment.metadata) {
+          throw new BadRequest("Attachment must have metadata");
+        }
+      }
+    }
+
+    // Create message with attachments
+    const messageData: any = {
       conversationId,
       senderId,
       recipientId,
@@ -84,7 +99,37 @@ export class Messages extends Service {
         delivered: false,
         read: false,
       },
-    }) as MessageDocument;
+    };
+
+    // Add attachments if provided
+    if (attachments && attachments.length > 0) {
+      messageData.attachments = attachments;
+    }
+
+    // Add reply data if provided
+    if (reply) {
+      messageData.reply = reply;
+    }
+
+    const message = await this.Model.create(messageData) as MessageDocument;
+
+    // Create conversation-attachments records for each attachment
+    // Temporarily disabled due to service issues
+    // if (attachments && attachments.length > 0) {
+    //   const conversationAttachmentsService = this.app.service("conversation-attachments");
+
+    //   for (const attachment of message.attachments) {
+    //     await conversationAttachmentsService.createAttachmentRecord({
+    //       conversationId: conversationId,
+    //       messageId: message._id.toString(),
+    //       attachmentId: attachment._id.toString(),
+    //       type: attachment.type,
+    //       url: attachment.url,
+    //       metadata: attachment.metadata,
+    //       senderId: senderId.toString(),
+    //     });
+    //   }
+    // }
 
     // Update conversation
     await this.app.service("conversations").patch(
@@ -166,6 +211,13 @@ export class Messages extends Service {
     if (message.senderId.toString() !== userId.toString()) {
       throw new Forbidden("Only sender can delete message");
     }
+
+    // Remove conversation-attachments records if message has attachments
+    // Temporarily disabled due to service issues
+    // if (message.attachments && message.attachments.length > 0) {
+    //   const conversationAttachmentsService = this.app.service("conversation-attachments");
+    //   await conversationAttachmentsService.removeAttachmentsByMessage(id);
+    // }
 
     // Soft delete
     return await this.Model.findByIdAndUpdate(

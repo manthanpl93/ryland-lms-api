@@ -1,7 +1,7 @@
 import assert from "assert";
 import app from "../../../src/app";
 import { clearTestDatabase } from "../../helpers/database";
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 describe("Message Reactions Socket Integration Tests", () => {
   let server: any;
@@ -24,7 +24,7 @@ describe("Message Reactions Socket Integration Tests", () => {
     
     // Initialize chat socket
     app.set("server", server);
-    const initializeChatSocket = require('../../../src/socket/chatSocket');
+    const initializeChatSocket = require("../../../src/socket/chatSocket");
     initializeChatSocket(app);
     
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -117,17 +117,17 @@ describe("Message Reactions Socket Integration Tests", () => {
     const socketUrl = `http://localhost:${port}`;
     
     student1Socket = io(socketUrl, {
-      path: '/chat-socket/',
+      path: "/chat-socket/",
       query: { token: student1Token },
-      transports: ['polling', 'websocket'],
+      transports: ["polling", "websocket"],
       reconnection: false,
       timeout: 15000
     });
 
     student2Socket = io(socketUrl, {
-      path: '/chat-socket/',
+      path: "/chat-socket/",
       query: { token: student2Token },
-      transports: ['polling', 'websocket'],
+      transports: ["polling", "websocket"],
       reconnection: false,
       timeout: 15000
     });
@@ -135,30 +135,30 @@ describe("Message Reactions Socket Integration Tests", () => {
     // Wait for all sockets to connect
     await Promise.all([
       new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Student1 socket timeout')), 10000);
-        student1Socket.on('connect', () => {
+        const timeout = setTimeout(() => reject(new Error("Student1 socket timeout")), 10000);
+        student1Socket.on("connect", () => {
           clearTimeout(timeout);
           resolve();
         });
-        student1Socket.on('connect_error', (err: any) => {
+        student1Socket.on("connect_error", (err: any) => {
           clearTimeout(timeout);
           reject(err);
         });
       }),
       new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Student2 socket timeout')), 10000);
-        student2Socket.on('connect', () => {
+        const timeout = setTimeout(() => reject(new Error("Student2 socket timeout")), 10000);
+        student2Socket.on("connect", () => {
           clearTimeout(timeout);
           resolve();
         });
-        student2Socket.on('connect_error', (err: any) => {
+        student2Socket.on("connect_error", (err: any) => {
           clearTimeout(timeout);
           reject(err);
         });
       })
     ]);
 
-    console.log('All test sockets connected successfully');
+    console.log("All test sockets connected successfully");
   });
 
   // Clean up reactions before each test to prevent state pollution
@@ -180,10 +180,10 @@ describe("Message Reactions Socket Integration Tests", () => {
     });
 
     // Remove all existing event listeners to prevent pollution
-    student1Socket.removeAllListeners('reaction:updated');
-    student1Socket.removeAllListeners('reaction:error');
-    student2Socket.removeAllListeners('reaction:updated');
-    student2Socket.removeAllListeners('reaction:error');
+    student1Socket.removeAllListeners("reaction:updated");
+    student1Socket.removeAllListeners("reaction:error");
+    student2Socket.removeAllListeners("reaction:updated");
+    student2Socket.removeAllListeners("reaction:error");
 
     // Small delay to ensure cleanup completes
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -219,13 +219,13 @@ describe("Message Reactions Socket Integration Tests", () => {
         }
       };
 
-      student1Socket.on('reaction:updated', (data: any) => {
+      student1Socket.on("reaction:updated", (data: any) => {
         try {
           assert.strictEqual(data.messageId, testMessageId.toString(), "Should update correct message");
           assert.strictEqual(data.reactionCounts.thumbs_up, 1, "Thumbs up count should be 1");
           assert.strictEqual(data.reactionCounts.total, 1, "Total count should be 1");
           assert.strictEqual(data.userId, testStudent1Id.toString(), "Should be from correct user");
-          assert.strictEqual(data.action, 'added', "Action should be 'added'");
+          assert.strictEqual(data.action, "added", "Action should be 'added'");
           assert.strictEqual(data.reactions.length, 1, "Should have 1 reaction in array");
           assert.strictEqual(data.reactions[0].reactionType, "thumbs_up", "Reaction type should be thumbs_up");
 
@@ -237,15 +237,15 @@ describe("Message Reactions Socket Integration Tests", () => {
       });
 
       // Send reaction
-      student1Socket.emit('reaction:add', {
+      student1Socket.emit("reaction:add", {
         messageId: testMessageId,
-        reactionType: 'thumbs_up'
+        reactionType: "thumbs_up"
       });
 
       // Timeout after 3 seconds
       setTimeout(() => {
         if (!updateReceived) {
-          reject(new Error('Reaction update not received within timeout'));
+          reject(new Error("Reaction update not received within timeout"));
         }
       }, 3000);
     });
@@ -264,9 +264,9 @@ describe("Message Reactions Socket Integration Tests", () => {
         }
       };
 
-      student2Socket.on('reaction:updated', (data: any) => {
+      student2Socket.on("reaction:updated", (data: any) => {
         try {
-          if (data.action === 'added') {
+          if (data.action === "added") {
             assert.strictEqual(data.reactionCounts.heart, 1, "Heart count should be 1 after add");
             assert.strictEqual(data.userId, testStudent2Id.toString(), "Should be from correct user");
             addReceived = true;
@@ -274,12 +274,12 @@ describe("Message Reactions Socket Integration Tests", () => {
 
             // Now toggle it off
             setTimeout(() => {
-              student2Socket.emit('reaction:add', {
+              student2Socket.emit("reaction:add", {
                 messageId: testMessageId,
-                reactionType: 'heart'
+                reactionType: "heart"
               });
             }, 100);
-          } else if (data.action === 'toggled') {
+          } else if (data.action === "toggled") {
             assert.strictEqual(data.reactionCounts.heart, 0, "Heart count should be 0 after toggle");
             assert.strictEqual(data.userId, testStudent2Id.toString(), "Should be from correct user");
             assert.strictEqual(data.reactions.length, 0, "Reactions array should be empty");
@@ -292,15 +292,15 @@ describe("Message Reactions Socket Integration Tests", () => {
       });
 
       // Start by adding reaction
-      student2Socket.emit('reaction:add', {
+      student2Socket.emit("reaction:add", {
         messageId: testMessageId,
-        reactionType: 'heart'
+        reactionType: "heart"
       });
 
       // Timeout after 5 seconds
       setTimeout(() => {
         if (!addReceived || !toggleReceived) {
-          reject(new Error('Reaction toggle test timed out'));
+          reject(new Error("Reaction toggle test timed out"));
         }
       }, 5000);
     });
@@ -319,9 +319,9 @@ describe("Message Reactions Socket Integration Tests", () => {
         }
       };
 
-      student2Socket.on('reaction:updated', (data: any) => {
+      student2Socket.on("reaction:updated", (data: any) => {
         try {
-          if (data.action === 'added') {
+          if (data.action === "added") {
             assert.strictEqual(data.reactionCounts.laugh, 1, "Laugh count should be 1 after add");
             assert.strictEqual(data.reactionCounts.surprised, 0, "Surprised count should be 0");
             assert.strictEqual(data.userId, testStudent2Id.toString(), "Should be from correct user");
@@ -330,12 +330,12 @@ describe("Message Reactions Socket Integration Tests", () => {
 
             // Now change to surprised
             setTimeout(() => {
-              student2Socket.emit('reaction:add', {
+              student2Socket.emit("reaction:add", {
                 messageId: testMessageId,
-                reactionType: 'surprised'
+                reactionType: "surprised"
               });
             }, 100);
-          } else if (data.action === 'changed') {
+          } else if (data.action === "changed") {
             assert.strictEqual(data.reactionCounts.laugh, 0, "Laugh count should be 0 after change");
             assert.strictEqual(data.reactionCounts.surprised, 1, "Surprised count should be 1 after change");
             assert.strictEqual(data.userId, testStudent2Id.toString(), "Should be from correct user");
@@ -350,15 +350,15 @@ describe("Message Reactions Socket Integration Tests", () => {
       });
 
       // Start by adding laugh reaction
-      student2Socket.emit('reaction:add', {
+      student2Socket.emit("reaction:add", {
         messageId: testMessageId,
-        reactionType: 'laugh'
+        reactionType: "laugh"
       });
 
       // Timeout after 5 seconds
       setTimeout(() => {
         if (!addReceived || !changeReceived) {
-          reject(new Error('Reaction change test timed out'));
+          reject(new Error("Reaction change test timed out"));
         }
       }, 5000);
     });
@@ -377,20 +377,20 @@ describe("Message Reactions Socket Integration Tests", () => {
         }
       };
 
-      student1Socket.on('reaction:updated', (data: any) => {
+      student1Socket.on("reaction:updated", (data: any) => {
         try {
-          if (data.action === 'added') {
+          if (data.action === "added") {
             assert.strictEqual(data.reactionCounts.sad, 1, "Sad count should be 1 after add");
             addReceived = true;
             checkComplete();
 
             // Now remove it explicitly
             setTimeout(() => {
-              student1Socket.emit('reaction:remove', {
+              student1Socket.emit("reaction:remove", {
                 messageId: testMessageId
               });
             }, 100);
-          } else if (data.action === 'removed') {
+          } else if (data.action === "removed") {
             assert.strictEqual(data.reactionCounts.sad, 0, "Sad count should be 0 after remove");
             assert.strictEqual(data.reactions.length, 0, "Reactions array should be empty");
             removeReceived = true;
@@ -402,15 +402,15 @@ describe("Message Reactions Socket Integration Tests", () => {
       });
 
       // Start by adding sad reaction
-      student1Socket.emit('reaction:add', {
+      student1Socket.emit("reaction:add", {
         messageId: testMessageId,
-        reactionType: 'sad'
+        reactionType: "sad"
       });
 
       // Timeout after 5 seconds
       setTimeout(() => {
         if (!addReceived || !removeReceived) {
-          reject(new Error('Reaction remove test timed out'));
+          reject(new Error("Reaction remove test timed out"));
         }
       }, 5000);
     });
@@ -446,15 +446,15 @@ describe("Message Reactions Socket Integration Tests", () => {
         // Create socket for unauthorized user
         const port = app.get("port") || 3035;
         const otherSocket = io(`http://localhost:${port}`, {
-          path: '/chat-socket/',
+          path: "/chat-socket/",
           query: { token: otherToken },
-          transports: ['polling', 'websocket'],
+          transports: ["polling", "websocket"],
           reconnection: false,
           timeout: 15000
         });
 
-        otherSocket.on('connect', () => {
-          otherSocket.on('reaction:error', (error: any) => {
+        otherSocket.on("connect", () => {
+          otherSocket.on("reaction:error", (error: any) => {
             try {
               assert.strictEqual(error.error, "Not authorized to react to this message");
               otherSocket.disconnect();
@@ -465,16 +465,16 @@ describe("Message Reactions Socket Integration Tests", () => {
           });
 
           // Try to react to message
-          otherSocket.emit('reaction:add', {
+          otherSocket.emit("reaction:add", {
             messageId: testMessageId,
-            reactionType: 'thumbs_up'
+            reactionType: "thumbs_up"
           });
         });
 
         // Timeout after 5 seconds
         setTimeout(() => {
           otherSocket.disconnect();
-          reject(new Error('Authorization test timed out'));
+          reject(new Error("Authorization test timed out"));
         }, 5000);
       }).catch(reject);
     });
@@ -487,7 +487,7 @@ describe("Message Reactions Socket Integration Tests", () => {
       const { ObjectId } = app.get("mongooseClient").Types;
       const fakeMessageId = new ObjectId();
 
-      student1Socket.on('reaction:error', (error: any) => {
+      student1Socket.on("reaction:error", (error: any) => {
         try {
           assert.strictEqual(error.error, "Message not found");
           resolve();
@@ -496,14 +496,14 @@ describe("Message Reactions Socket Integration Tests", () => {
         }
       });
 
-      student1Socket.emit('reaction:add', {
+      student1Socket.emit("reaction:add", {
         messageId: fakeMessageId,
-        reactionType: 'thumbs_up'
+        reactionType: "thumbs_up"
       });
 
       // Timeout after 3 seconds
       setTimeout(() => {
-        reject(new Error('Non-existent message test timed out'));
+        reject(new Error("Non-existent message test timed out"));
       }, 3000);
     });
   });
@@ -515,27 +515,27 @@ describe("Message Reactions Socket Integration Tests", () => {
 
     // Create and soft-delete a message
     const tempMessage = await messagesModel.create({
-        conversationId: testConversationId,
-        senderId: testStudent1Id,
-        recipientId: testStudent2Id,
-        content: "Temp message to delete",
-        status: { delivered: false, read: false },
-        isEdited: false,
-        isDeleted: true,
-        deletedAt: new Date(),
-        reactions: [],
-        reactionCounts: {
-          thumbs_up: 0,
-          heart: 0,
-          laugh: 0,
-          surprised: 0,
-          sad: 0,
+      conversationId: testConversationId,
+      senderId: testStudent1Id,
+      recipientId: testStudent2Id,
+      content: "Temp message to delete",
+      status: { delivered: false, read: false },
+      isEdited: false,
+      isDeleted: true,
+      deletedAt: new Date(),
+      reactions: [],
+      reactionCounts: {
+        thumbs_up: 0,
+        heart: 0,
+        laugh: 0,
+        surprised: 0,
+        sad: 0,
         total: 0
       }
     });
 
     return new Promise<void>((resolve, reject) => {
-      student1Socket.on('reaction:error', (error: any) => {
+      student1Socket.on("reaction:error", (error: any) => {
         try {
           assert.strictEqual(error.error, "Cannot react to deleted message");
           resolve();
@@ -544,14 +544,14 @@ describe("Message Reactions Socket Integration Tests", () => {
         }
       });
 
-      student1Socket.emit('reaction:add', {
+      student1Socket.emit("reaction:add", {
         messageId: tempMessage._id,
-        reactionType: 'thumbs_up'
+        reactionType: "thumbs_up"
       });
 
       // Timeout after 3 seconds
       setTimeout(() => {
-        reject(new Error('Deleted message test timed out'));
+        reject(new Error("Deleted message test timed out"));
       }, 3000);
     });
   });
@@ -571,13 +571,13 @@ describe("Message Reactions Socket Integration Tests", () => {
 
         const type = reactionTypes[index];
 
-        student1Socket.once('reaction:updated', (data: any) => {
+        student1Socket.once("reaction:updated", (data: any) => {
           try {
             // First reaction will be 'added', subsequent ones will be 'changed'
-            const expectedAction = index === 0 ? 'added' : 'changed';
+            const expectedAction = index === 0 ? "added" : "changed";
             assert.strictEqual(data.action, expectedAction, `Action should be ${expectedAction} for ${type}`);
             assert.strictEqual(data.reactionCounts[type], 1, `${type} count should be 1`);
-            assert.strictEqual(data.reactionCounts.total, 1, `Total count should be 1`);
+            assert.strictEqual(data.reactionCounts.total, 1, "Total count should be 1");
             assert.strictEqual(data.userId, testStudent1Id.toString());
             completedTests++;
 
@@ -588,7 +588,7 @@ describe("Message Reactions Socket Integration Tests", () => {
           }
         });
 
-        student1Socket.emit('reaction:add', {
+        student1Socket.emit("reaction:add", {
           messageId: testMessageId,
           reactionType: type
         });

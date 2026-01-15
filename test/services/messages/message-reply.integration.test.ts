@@ -1,7 +1,7 @@
 import assert from "assert";
 import app from "../../../src/app";
 import { clearTestDatabase } from "../../helpers/database";
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 describe("Message Reply Socket Tests", () => {
   let server: any;
@@ -23,7 +23,7 @@ describe("Message Reply Socket Tests", () => {
 
     // Store server reference and initialize chat socket
     app.set("server", server);
-    const initializeChatSocket = require('../../../src/socket/chatSocket');
+    const initializeChatSocket = require("../../../src/socket/chatSocket");
     initializeChatSocket(app);
 
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -127,9 +127,9 @@ describe("Message Reply Socket Tests", () => {
     // Connect student socket
     const socketUrl = `http://localhost:${port}`;
     studentSocket = io(socketUrl, {
-      path: '/chat-socket/',
+      path: "/chat-socket/",
       query: { token: studentToken },
-      transports: ['polling', 'websocket'],
+      transports: ["polling", "websocket"],
       reconnection: false,
       timeout: 15000,
       forceNew: true
@@ -137,9 +137,9 @@ describe("Message Reply Socket Tests", () => {
 
     // Connect teacher socket
     teacherSocket = io(socketUrl, {
-      path: '/chat-socket/',
+      path: "/chat-socket/",
       query: { token: teacherToken },
-      transports: ['polling', 'websocket'],
+      transports: ["polling", "websocket"],
       reconnection: false,
       timeout: 15000,
       forceNew: true
@@ -149,35 +149,35 @@ describe("Message Reply Socket Tests", () => {
     await Promise.all([
       new Promise<void>((resolve, reject) => {
         const connectTimeout = setTimeout(() => {
-          reject(new Error('Student socket connection timeout'));
+          reject(new Error("Student socket connection timeout"));
         }, 10000);
 
-        studentSocket.on('connect', () => {
+        studentSocket.on("connect", () => {
           clearTimeout(connectTimeout);
-          console.log('Test student socket connected successfully');
+          console.log("Test student socket connected successfully");
           resolve();
         });
 
-        studentSocket.on('connect_error', (error: any) => {
+        studentSocket.on("connect_error", (error: any) => {
           clearTimeout(connectTimeout);
-          console.error('Student socket connection error:', error.message);
+          console.error("Student socket connection error:", error.message);
           reject(error);
         });
       }),
       new Promise<void>((resolve, reject) => {
         const connectTimeout = setTimeout(() => {
-          reject(new Error('Teacher socket connection timeout'));
+          reject(new Error("Teacher socket connection timeout"));
         }, 10000);
 
-        teacherSocket.on('connect', () => {
+        teacherSocket.on("connect", () => {
           clearTimeout(connectTimeout);
-          console.log('Test teacher socket connected successfully');
+          console.log("Test teacher socket connected successfully");
           resolve();
         });
 
-        teacherSocket.on('connect_error', (error: any) => {
+        teacherSocket.on("connect_error", (error: any) => {
           clearTimeout(connectTimeout);
-          console.error('Teacher socket connection error:', error.message);
+          console.error("Teacher socket connection error:", error.message);
           reject(error);
         });
       })
@@ -200,12 +200,12 @@ describe("Message Reply Socket Tests", () => {
   it("Test 1: Send reply and receive via socket", function(this: Mocha.Context, done) {
     this.timeout(10000);
 
-    teacherSocket.once('message:reply:receive', (data: any) => {
+    teacherSocket.once("message:reply:receive", (data: any) => {
       try {
-        console.log('Received message:reply:receive:', data);
+        console.log("Received message:reply:receive:", data);
         assert.strictEqual(data.reply.messageId, testMessageId.toString(), "Should reference correct original message");
         assert.ok(data.reply.content, "Should include reply content");
-        assert.strictEqual(data.reply.messageType, 'text', "Should have correct message type");
+        assert.strictEqual(data.reply.messageType, "text", "Should have correct message type");
         assert.strictEqual(data.reply.senderId, testTeacherId.toString(), "Should have correct original sender");
         assert.strictEqual(data.conversationId, testConversationId.toString(), "Should be in correct conversation");
         assert.strictEqual(data.from, testStudentId.toString(), "Should be from student");
@@ -216,10 +216,10 @@ describe("Message Reply Socket Tests", () => {
       }
     });
 
-    console.log('Emitting message:reply from student to teacher');
-    studentSocket.emit('message:reply', {
+    console.log("Emitting message:reply from student to teacher");
+    studentSocket.emit("message:reply", {
       recipientId: testTeacherId,
-      content: 'I am doing great, thank you!',
+      content: "I am doing great, thank you!",
       conversationId: testConversationId,
       replyToMessageId: testMessageId
     });
@@ -228,7 +228,7 @@ describe("Message Reply Socket Tests", () => {
   it("Test 2: Reply object structure saved in database", function(this: Mocha.Context, done) {
     this.timeout(10000);
 
-    teacherSocket.once('message:reply:receive', async (data: any) => {
+    teacherSocket.once("message:reply:receive", async (data: any) => {
       try {
         // Wait a bit for database to be updated
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -241,7 +241,7 @@ describe("Message Reply Socket Tests", () => {
         assert.ok(savedMessage.reply, "Message should have reply object");
         assert.strictEqual(savedMessage.reply.messageId.toString(), testMessageId.toString(), "Reply should reference correct message");
         assert.strictEqual(savedMessage.reply.content, "Hello, how are you doing?", "Reply should have correct content");
-        assert.strictEqual(savedMessage.reply.messageType, 'text', "Reply should have correct type");
+        assert.strictEqual(savedMessage.reply.messageType, "text", "Reply should have correct type");
         assert.strictEqual(savedMessage.reply.senderId.toString(), testTeacherId.toString(), "Reply should have correct sender");
 
         done();
@@ -250,9 +250,9 @@ describe("Message Reply Socket Tests", () => {
       }
     });
 
-    studentSocket.emit('message:reply', {
+    studentSocket.emit("message:reply", {
       recipientId: testTeacherId,
-      content: 'Database test reply',
+      content: "Database test reply",
       conversationId: testConversationId,
       replyToMessageId: testMessageId
     });
@@ -275,7 +275,7 @@ describe("Message Reply Socket Tests", () => {
       reactions: [],
       reactionCounts: { thumbs_up: 0, heart: 0, laugh: 0, surprised: 0, sad: 0, total: 0 }
     }).then(async (longMessage: any) => {
-      teacherSocket.once('message:reply:receive', (data: any) => {
+      teacherSocket.once("message:reply:receive", (data: any) => {
         try {
           const expectedTruncated = longMessageContent.substring(0, 200) + "...";
           assert.strictEqual(data.reply.content, expectedTruncated, "Long content should be truncated to 200 chars + ...");
@@ -285,9 +285,9 @@ describe("Message Reply Socket Tests", () => {
         }
       });
 
-      studentSocket.emit('message:reply', {
+      studentSocket.emit("message:reply", {
         recipientId: testTeacherId,
-        content: 'Reply to long message',
+        content: "Reply to long message",
         conversationId: testConversationId,
         replyToMessageId: longMessage._id
       });
@@ -299,9 +299,9 @@ describe("Message Reply Socket Tests", () => {
 
     const fakeMessageId = "507f1f77bcf86cd799439011"; // Valid ObjectId format but doesn't exist
 
-    studentSocket.once('message:error', (data: any) => {
+    studentSocket.once("message:error", (data: any) => {
       try {
-        console.log('Received message:error:', data);
+        console.log("Received message:error:", data);
         assert.ok(data.error, "Should receive error");
         assert.strictEqual(data.error, "Original message not found", "Should have correct error message");
         done();
@@ -310,9 +310,9 @@ describe("Message Reply Socket Tests", () => {
       }
     });
 
-    studentSocket.emit('message:reply', {
+    studentSocket.emit("message:reply", {
       recipientId: testTeacherId,
-      content: 'Reply to non-existent message',
+      content: "Reply to non-existent message",
       conversationId: testConversationId,
       replyToMessageId: fakeMessageId
     });
@@ -335,7 +335,7 @@ describe("Message Reply Socket Tests", () => {
       // Mark as deleted
       await Messages.findByIdAndUpdate(messageToDelete._id, { isDeleted: true, deletedAt: new Date() });
 
-      studentSocket.once('message:error', (data: any) => {
+      studentSocket.once("message:error", (data: any) => {
         try {
           assert.ok(data.error, "Should receive error");
           assert.strictEqual(data.error, "Cannot reply to deleted message", "Should have correct error message");
@@ -345,9 +345,9 @@ describe("Message Reply Socket Tests", () => {
         }
       });
 
-      studentSocket.emit('message:reply', {
+      studentSocket.emit("message:reply", {
         recipientId: testTeacherId,
-        content: 'Reply to deleted message',
+        content: "Reply to deleted message",
         conversationId: testConversationId,
         replyToMessageId: messageToDelete._id
       });
@@ -359,10 +359,10 @@ describe("Message Reply Socket Tests", () => {
 
     let eventReceived = false;
 
-    teacherSocket.once('message:reply:receive', (data: any) => {
+    teacherSocket.once("message:reply:receive", (data: any) => {
       eventReceived = true;
       try {
-        assert.strictEqual(data.status, 'sent', "Should have sent status");
+        assert.strictEqual(data.status, "sent", "Should have sent status");
         // Message should be marked as delivered in DB after socket delivery
         setTimeout(async () => {
           try {
@@ -379,9 +379,9 @@ describe("Message Reply Socket Tests", () => {
       }
     });
 
-    studentSocket.emit('message:reply', {
+    studentSocket.emit("message:reply", {
       recipientId: testTeacherId,
-      content: 'Online delivery test',
+      content: "Online delivery test",
       conversationId: testConversationId,
       replyToMessageId: testMessageId
     });
@@ -397,7 +397,7 @@ describe("Message Reply Socket Tests", () => {
   it("Test 7: Missing required fields returns error", function(this: Mocha.Context, done) {
     this.timeout(5000);
 
-    studentSocket.once('message:error', (data: any) => {
+    studentSocket.once("message:error", (data: any) => {
       try {
         assert.ok(data.error, "Should receive error");
         assert.strictEqual(data.error, "Missing required fields: recipientId, content, replyToMessageId, conversationId", "Should have correct error message");
@@ -408,8 +408,8 @@ describe("Message Reply Socket Tests", () => {
     });
 
     // Missing recipientId
-    studentSocket.emit('message:reply', {
-      content: 'Missing recipient',
+    studentSocket.emit("message:reply", {
+      content: "Missing recipient",
       conversationId: testConversationId,
       replyToMessageId: testMessageId
     });
@@ -420,7 +420,7 @@ describe("Message Reply Socket Tests", () => {
 
     let deliveredEventReceived = false;
 
-    studentSocket.once('message:delivered', (data: any) => {
+    studentSocket.once("message:delivered", (data: any) => {
       deliveredEventReceived = true;
       try {
         assert.ok(data.messageId, "Should have messageId");
@@ -434,12 +434,12 @@ describe("Message Reply Socket Tests", () => {
       }
     });
 
-    studentSocket.emit('message:reply', {
+    studentSocket.emit("message:reply", {
       recipientId: testTeacherId,
-      content: 'Delivery confirmation test',
+      content: "Delivery confirmation test",
       conversationId: testConversationId,
       replyToMessageId: testMessageId,
-      tempId: 'test_temp_id_123'
+      tempId: "test_temp_id_123"
     });
 
     // Timeout if no delivery confirmation

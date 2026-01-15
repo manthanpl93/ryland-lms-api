@@ -20,6 +20,8 @@ const EVENT_GROUPS = {
     UPDATE: "message:update", // Update existing message
     DELETE: "message:delete", // Delete message
     ERROR: "message:error", // Message operation error
+    LINK_PREVIEW: "message:link-preview", // Fetch link preview
+    LINK_PREVIEW_RESULT: "message:link-preview:result", // Preview data result
   },
 
   // Typing indicator events
@@ -47,6 +49,7 @@ const CLIENT_TO_SERVER = [
   EVENT_GROUPS.MESSAGE.READ,
   EVENT_GROUPS.MESSAGE.UPDATE,
   EVENT_GROUPS.MESSAGE.DELETE,
+  EVENT_GROUPS.MESSAGE.LINK_PREVIEW,
   EVENT_GROUPS.TYPING.START,
   EVENT_GROUPS.TYPING.STOP,
   EVENT_GROUPS.REACTION.ADD,
@@ -67,6 +70,7 @@ const SERVER_TO_CLIENT = [
   EVENT_GROUPS.MESSAGE.UPDATE,
   EVENT_GROUPS.MESSAGE.DELETE,
   EVENT_GROUPS.MESSAGE.ERROR,
+  EVENT_GROUPS.MESSAGE.LINK_PREVIEW_RESULT,
   EVENT_GROUPS.TYPING.START,
   EVENT_GROUPS.TYPING.STOP,
   EVENT_GROUPS.REACTION.UPDATED,

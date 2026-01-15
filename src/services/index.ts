@@ -36,6 +36,15 @@ import forumPostComments from "./forum-post-comments/forum-post-comments.service
 import forumCommentUpvote from "./forum-comment-upvote/forum-comment-upvote.service";
 import savedPosts from "./saved-posts/saved-posts.service";
 import forumFeed from "./forum-feed/forum-feed.service";
+// Conditionally import message attachments upload service
+let messageAttachmentsUpload: any = null;
+try {
+  messageAttachmentsUpload = require("./message-attachments-upload/message-attachments-upload.service").default;
+} catch (error) {
+  console.warn("⚠️  Message attachments upload service not available - missing dependencies (sharp, cheerio, file-type)");
+}
+
+import conversationAttachments from "./conversation-attachments/conversation-attachments.service";
 // Don't remove this comment. It's needed to format import lines nicely.
 
 export default function (app: Application): void {
@@ -77,4 +86,10 @@ export default function (app: Application): void {
   app.configure(forumCommentUpvote);
   app.configure(savedPosts);
   app.configure(forumFeed);
+  // Conditionally configure message attachments upload service
+  if (messageAttachmentsUpload) {
+    app.configure(messageAttachmentsUpload);
+  }
+
+  // app.configure(conversationAttachments);
 }

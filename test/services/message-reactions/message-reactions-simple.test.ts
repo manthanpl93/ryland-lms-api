@@ -1,7 +1,7 @@
 import assert from "assert";
 import app from "../../../src/app";
 import { clearTestDatabase } from "../../helpers/database";
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 describe("Message Reactions Socket Tests - Simplified", () => {
   let server: any;
@@ -20,7 +20,7 @@ describe("Message Reactions Socket Tests - Simplified", () => {
     
     // Store server reference and initialize chat socket
     app.set("server", server);
-    const initializeChatSocket = require('../../../src/socket/chatSocket');
+    const initializeChatSocket = require("../../../src/socket/chatSocket");
     initializeChatSocket(app);
     
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -100,9 +100,9 @@ describe("Message Reactions Socket Tests - Simplified", () => {
     // Create socket connection to chat socket (uses separate socket.io instance)
     const socketUrl = `http://localhost:${port}`;
     studentSocket = io(socketUrl, {
-      path: '/chat-socket/',
+      path: "/chat-socket/",
       query: { token: studentToken },
-      transports: ['polling', 'websocket'],
+      transports: ["polling", "websocket"],
       reconnection: false,
       timeout: 15000,
       forceNew: true
@@ -111,18 +111,18 @@ describe("Message Reactions Socket Tests - Simplified", () => {
     // Wait for socket to connect
     await new Promise<void>((resolve, reject) => {
       const connectTimeout = setTimeout(() => {
-        reject(new Error('Socket connection timeout'));
+        reject(new Error("Socket connection timeout"));
       }, 10000);
 
-      studentSocket.on('connect', () => {
+      studentSocket.on("connect", () => {
         clearTimeout(connectTimeout);
-        console.log('Test socket connected successfully');
+        console.log("Test socket connected successfully");
         resolve();
       });
 
-      studentSocket.on('connect_error', (error: any) => {
+      studentSocket.on("connect_error", (error: any) => {
         clearTimeout(connectTimeout);
-        console.error('Socket connection error:', error.message);
+        console.error("Socket connection error:", error.message);
         reject(error);
       });
     });
@@ -143,23 +143,23 @@ describe("Message Reactions Socket Tests - Simplified", () => {
   it("Test 1: Add reaction via socket and receive update", function(this: Mocha.Context, done: Mocha.Done) {
     this.timeout(10000);
 
-    studentSocket.once('reaction:updated', (data: any) => {
+    studentSocket.once("reaction:updated", (data: any) => {
       try {
-        console.log('Received reaction:updated:', data);
+        console.log("Received reaction:updated:", data);
         assert.strictEqual(data.messageId, testMessageId.toString(), "Should update correct message");
         assert.strictEqual(data.reactionCounts.thumbs_up, 1, "Thumbs up count should be 1");
         assert.strictEqual(data.reactionCounts.total, 1, "Total count should be 1");
-        assert.strictEqual(data.action, 'added', "Action should be 'added'");
+        assert.strictEqual(data.action, "added", "Action should be 'added'");
         done();
       } catch (error) {
         done(error);
       }
     });
 
-    console.log('Emitting reaction:add for message:', testMessageId);
-    studentSocket.emit('reaction:add', {
+    console.log("Emitting reaction:add for message:", testMessageId);
+    studentSocket.emit("reaction:add", {
       messageId: testMessageId,
-      reactionType: 'thumbs_up'
+      reactionType: "thumbs_up"
     });
   });
 
@@ -174,9 +174,9 @@ describe("Message Reactions Socket Tests - Simplified", () => {
       console.log(`Event ${eventCount} - action: ${data.action}, thumbs_up: ${data.reactionCounts.thumbs_up}`);
 
       try {
-        if (data.action === 'toggled' && !doneCalled) {
+        if (data.action === "toggled" && !doneCalled) {
           doneCalled = true;
-          studentSocket.off('reaction:updated', handler); // Remove listener
+          studentSocket.off("reaction:updated", handler); // Remove listener
           assert.strictEqual(data.reactionCounts.thumbs_up, 0, "Thumbs up count should be 0 after toggle");
           assert.strictEqual(data.reactionCounts.total, 0, "Total should be 0");
           done();
@@ -184,19 +184,19 @@ describe("Message Reactions Socket Tests - Simplified", () => {
       } catch (error) {
         if (!doneCalled) {
           doneCalled = true;
-          studentSocket.off('reaction:updated', handler);
+          studentSocket.off("reaction:updated", handler);
           done(error);
         }
       }
     };
 
-    studentSocket.on('reaction:updated', handler);
+    studentSocket.on("reaction:updated", handler);
 
     // Toggle the existing thumbs_up from Test 1
-    console.log('Emitting reaction:add to toggle thumbs_up');
-    studentSocket.emit('reaction:add', {
+    console.log("Emitting reaction:add to toggle thumbs_up");
+    studentSocket.emit("reaction:add", {
       messageId: testMessageId,
-      reactionType: 'thumbs_up'
+      reactionType: "thumbs_up"
     });
   });
 
@@ -208,21 +208,21 @@ describe("Message Reactions Socket Tests - Simplified", () => {
 
     const handler = (data: any) => {
       try {
-        if (data.action === 'added' && data.reactionCounts.heart === 1 && !addReceived) {
-          console.log('Heart added');
+        if (data.action === "added" && data.reactionCounts.heart === 1 && !addReceived) {
+          console.log("Heart added");
           addReceived = true;
 
           // Now change to laugh
           setTimeout(() => {
-            studentSocket.emit('reaction:add', {
+            studentSocket.emit("reaction:add", {
               messageId: testMessageId,
-              reactionType: 'laugh'
+              reactionType: "laugh"
             });
           }, 200);
-        } else if (data.action === 'changed' && data.reactionCounts.laugh === 1 && !doneCalled) {
-          console.log('Changed to laugh');
+        } else if (data.action === "changed" && data.reactionCounts.laugh === 1 && !doneCalled) {
+          console.log("Changed to laugh");
           doneCalled = true;
-          studentSocket.off('reaction:updated', handler);
+          studentSocket.off("reaction:updated", handler);
           assert.strictEqual(data.reactionCounts.heart, 0, "Heart should be 0");
           assert.strictEqual(data.reactionCounts.laugh, 1, "Laugh should be 1");
           done();
@@ -230,27 +230,27 @@ describe("Message Reactions Socket Tests - Simplified", () => {
       } catch (error) {
         if (!doneCalled) {
           doneCalled = true;
-          studentSocket.off('reaction:updated', handler);
+          studentSocket.off("reaction:updated", handler);
           done(error);
         }
       }
     };
 
-    studentSocket.on('reaction:updated', handler);
+    studentSocket.on("reaction:updated", handler);
 
-    studentSocket.emit('reaction:add', {
+    studentSocket.emit("reaction:add", {
       messageId: testMessageId,
-      reactionType: 'heart'
+      reactionType: "heart"
     });
   });
 
   it("Test 4: Explicitly remove reaction", function(this: Mocha.Context, done: Mocha.Done) {
     this.timeout(10000);
 
-    studentSocket.once('reaction:updated', (data: any) => {
+    studentSocket.once("reaction:updated", (data: any) => {
       try {
-        console.log('Reaction removed:', data);
-        assert.strictEqual(data.action, 'removed', "Action should be 'removed'");
+        console.log("Reaction removed:", data);
+        assert.strictEqual(data.action, "removed", "Action should be 'removed'");
         assert.strictEqual(data.reactionCounts.laugh, 0, "Laugh should be 0");
         assert.strictEqual(data.reactionCounts.total, 0, "Total should be 0");
         done();
@@ -259,7 +259,7 @@ describe("Message Reactions Socket Tests - Simplified", () => {
       }
     });
 
-    studentSocket.emit('reaction:remove', {
+    studentSocket.emit("reaction:remove", {
       messageId: testMessageId
     });
   });
@@ -292,21 +292,21 @@ describe("Message Reactions Socket Tests - Simplified", () => {
           try {
             if (data.reactionCounts[type] === 1) {
               clearTimeout(timeout);
-              studentSocket.off('reaction:updated', handler);
+              studentSocket.off("reaction:updated", handler);
               console.log(`Testing ${type}:`, data.reactionCounts[type]);
               assert.strictEqual(data.reactionCounts[type], 1, `${type} should be 1`);
               resolve();
             }
           } catch (error) {
             clearTimeout(timeout);
-            studentSocket.off('reaction:updated', handler);
+            studentSocket.off("reaction:updated", handler);
             reject(error);
           }
         };
 
-        studentSocket.on('reaction:updated', handler);
+        studentSocket.on("reaction:updated", handler);
 
-        studentSocket.emit('reaction:add', {
+        studentSocket.emit("reaction:add", {
           messageId: testMessageId,
           reactionType: type
         });
@@ -319,9 +319,9 @@ describe("Message Reactions Socket Tests - Simplified", () => {
   it("Test 6: Invalid reaction type shows error", function(this: Mocha.Context, done: Mocha.Done) {
     this.timeout(5000);
 
-    studentSocket.once('reaction:error', (error: any) => {
+    studentSocket.once("reaction:error", (error: any) => {
       try {
-        console.log('Received error:', error);
+        console.log("Received error:", error);
         assert.ok(error.error.includes("Invalid reaction type"), "Should reject invalid type");
         done();
       } catch (err) {
@@ -329,9 +329,9 @@ describe("Message Reactions Socket Tests - Simplified", () => {
       }
     });
 
-    studentSocket.emit('reaction:add', {
+    studentSocket.emit("reaction:add", {
       messageId: testMessageId,
-      reactionType: 'invalid_type'
+      reactionType: "invalid_type"
     });
   });
 });

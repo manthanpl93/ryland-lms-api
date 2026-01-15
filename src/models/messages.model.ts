@@ -1,6 +1,41 @@
 import type { Application } from "../declarations";
 import { Model, Mongoose, Document, Types } from "mongoose";
 
+// Attachment type definitions
+export type AttachmentType = "image" | "link" | "document";
+
+export interface ImageMetadata {
+  filename: string;
+  size: number;
+  mimeType: string;
+  width: number;
+  height: number;
+  thumbnail: string;  // S3 URL to thumbnail
+}
+
+export interface LinkMetadata {
+  title: string;
+  description: string;
+  image?: string;      // Preview image URL
+  siteName?: string;
+  url: string;         // Original URL
+}
+
+export interface DocumentMetadata {
+  filename: string;
+  size: number;
+  mimeType: string;
+  pageCount?: number;
+}
+
+export interface MessageAttachment {
+  _id: Types.ObjectId;
+  type: AttachmentType;
+  url: string;
+  metadata: ImageMetadata | LinkMetadata | DocumentMetadata;
+  uploadedAt: Date;
+}
+
 export interface MessageDocument extends Document {
   _id: Types.ObjectId;
   conversationId: Types.ObjectId;
@@ -35,9 +70,10 @@ export interface MessageDocument extends Document {
   reply?: {
     messageId: Types.ObjectId;     // Reference to original message
     content: string;               // Cached content preview (max 200 chars)
-    messageType: 'text';           // Type of original message
+    messageType: "text";           // Type of original message
     senderId: Types.ObjectId;      // Original sender (for queries/display)
   };
+  attachments: MessageAttachment[];  // Message attachments array
   createdAt: Date;
   updatedAt: Date;
 }
@@ -167,6 +203,31 @@ export default function (app: Application): Model<MessageDocument> {
           required: false,  // Not required since whole reply object is optional
         }
       },
+
+      // Attachments - array of file/link attachments
+      attachments: [{
+        _id: {
+          type: Schema.Types.ObjectId,
+          default: () => new mongooseClient.Types.ObjectId()
+        },
+        type: {
+          type: String,
+          enum: ["image", "link", "document"],
+          required: true
+        },
+        url: {
+          type: String,
+          required: true
+        },
+        metadata: {
+          type: Schema.Types.Mixed,
+          required: true
+        },
+        uploadedAt: {
+          type: Date,
+          default: Date.now
+        }
+      }],
     },
     {
       timestamps: true,
