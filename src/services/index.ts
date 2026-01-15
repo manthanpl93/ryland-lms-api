@@ -40,8 +40,8 @@ import forumFeed from "./forum-feed/forum-feed.service";
 let messageAttachmentsUpload: any = null;
 try {
   messageAttachmentsUpload = require("./message-attachments-upload/message-attachments-upload.service").default;
-} catch (error) {
-  console.warn("⚠️  Message attachments upload service not available - missing dependencies (sharp, cheerio, file-type)");
+} catch (error: any) {
+  console.warn("⚠️  Message attachments upload service not available:", error.message);
 }
 
 import conversationAttachments from "./conversation-attachments/conversation-attachments.service";

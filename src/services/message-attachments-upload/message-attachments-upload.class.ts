@@ -1,4 +1,3 @@
-import { Service } from "@feathersjs/feathers";
 import { Application } from "../../declarations";
 import { Params } from "@feathersjs/feathers";
 import { BadRequest } from "@feathersjs/errors";
@@ -32,11 +31,10 @@ export const ATTACHMENT_LIMITS = {
   }
 };
 
-export class MessageAttachmentsUpload extends Service {
+export class MessageAttachmentsUpload {
   app: Application;
 
   constructor(app: Application) {
-    super();
     this.app = app;
   }
 
@@ -74,7 +72,7 @@ export class MessageAttachmentsUpload extends Service {
       throw new BadRequest("Invalid attachment type. Must be 'image' or 'document'");
     }
 
-    const limits = ATTACHMENT_LIMITS[attachmentType];
+    const limits = ATTACHMENT_LIMITS[attachmentType as "image" | "document"];
 
     // Validate file size
     if (fileSize > limits.maxSize) {
@@ -157,7 +155,7 @@ export class MessageAttachmentsUpload extends Service {
   /**
    * Generate thumbnail for image
    */
-  async generateThumbnail(data: any): Promise<any> {
+  async generateThumbnail(data: any, params?: Params): Promise<any> {
     const { url, maxWidth = 300, maxHeight = 300 } = data;
 
     if (!url) {
