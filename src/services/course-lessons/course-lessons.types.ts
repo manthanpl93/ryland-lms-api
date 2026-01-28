@@ -29,6 +29,7 @@ export interface ProgressInfo {
   finishDate?: Date;
   checkpoint?: any;
   canMarkCompleted?: boolean;
+  pointsEarned?: number;
 }
 
 export interface CheckpointData {
@@ -67,6 +68,8 @@ export interface CourseOutlineResponse {
   learnings?: string[];
   courseImage?: any;
   totalStudents?: number;
+  accumulatedPoints?: number;
+  totalPoints?: number;
 }
 
 export interface QuizValidationResult {

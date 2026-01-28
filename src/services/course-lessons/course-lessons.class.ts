@@ -395,6 +395,9 @@ export class CourseLessons extends Service {
       // Use existing progress percentage from studentProgress
       const progressPercentage = studentProgress.progressPercentage || 0;
 
+      // Calculate total points available in the course
+      const totalPoints = this.calculateCourseTotalPoints(courseOutline);
+
       const response: any = {
         enrolled: true,
         courseId: courseId,
@@ -406,6 +409,8 @@ export class CourseLessons extends Service {
         learnings: course.learnings,
         courseImage: (course as any).courseImage,
         totalStudents: (course as any).totalStudents || 0,
+        accumulatedPoints: studentProgress.accumulatedPoints || 0,
+        totalPoints,
       };
 
       return response;
@@ -879,6 +884,33 @@ export class CourseLessons extends Service {
   }
 
   /**
+   * Calculate total points available in a course
+   *
+   * @param courseOutline - Course outline
+   * @returns Total points available
+   */
+  private calculateCourseTotalPoints(courseOutline: any[]): number {
+    let totalPoints = 0;
+
+    for (const item of courseOutline) {
+      if (item.category === "module" && item.lessons) {
+        for (const lesson of item.lessons) {
+          // Add deadline points if enabled
+          if (lesson.deadlinePointsEnabled && lesson.deadlinePoints) {
+            totalPoints += lesson.deadlinePoints;
+          }
+          // Add quiz reward points if available
+          if (lesson.quizRewards?.additionalPoints) {
+            totalPoints += lesson.quizRewards.additionalPoints;
+          }
+        }
+      }
+    }
+
+    return totalPoints;
+  }
+
+  /**
    * Find progress information for a specific outline item
    *
    * @param progressHistory - User's progress history
@@ -919,6 +951,7 @@ export class CourseLessons extends Service {
                   finishDate: lessonProgress.finishDate,
                   checkpoint: lessonProgress.checkpoint || undefined,
                   canMarkCompleted: lessonProgress.canMarkCompleted || false,
+                  pointsEarned: lessonProgress.pointsEarned || 0,
                 }
                 : undefined,
             };
