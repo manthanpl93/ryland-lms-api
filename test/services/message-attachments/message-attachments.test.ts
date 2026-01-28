@@ -720,11 +720,11 @@ describe("Message Attachments Integration Tests", () => {
       });
       otherUserId = otherUser._id;
 
-    await app.service("authentication").create({
-      strategy: "otp",
-      mobileNo: otherUser.mobileNo,
-      otp: 111111
-    }, {});
+      await app.service("authentication").create({
+        strategy: "otp",
+        mobileNo: otherUser.mobileNo,
+        otp: 111111
+      }, {});
     });
 
     it("should deny access to conversation attachments for non-participant", async function(this: Mocha.Context) {

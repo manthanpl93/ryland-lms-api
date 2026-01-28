@@ -27,7 +27,7 @@ describe("Message Attachments - Basic Structure Test", () => {
 
   it("should have conversation-attachments model", () => {
     try {
-      const conversationAttachmentsModel = app.get("mongooseClient").models['conversation-attachments'];
+      const conversationAttachmentsModel = app.get("mongooseClient").models["conversation-attachments"];
       assert.ok(conversationAttachmentsModel, "Conversation-attachments model should exist");
     } catch (error: any) {
       console.log("Conversation-attachments model check failed:", error.message);

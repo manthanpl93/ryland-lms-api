@@ -61,6 +61,7 @@ export interface Lesson {
   _id: string;
   category: "lesson";
   title: string;
+  order: number;
   contentType: "media" | "text";
   type: "pdf" | "video" | "content" | "quiz";
   resource?: MediaUpload;
@@ -84,6 +85,7 @@ export interface Module {
   _id: string;
   category: "module";
   title: string;
+  order: number;
   lessons: Lesson[];
 }
 
@@ -116,6 +118,11 @@ export default function (app: Application): Model<Courses> {
     title: {
       type: String,
       required: true,
+    },
+    order: {
+      type: Number,
+      required: true,
+      default: 0,
     },
     contentType: {
       type: String,
@@ -180,6 +187,11 @@ export default function (app: Application): Model<Courses> {
     title: {
       type: String,
       required: true,
+    },
+    order: {
+      type: Number,
+      required: true,
+      default: 0,
     },
     category: {
       type: String,

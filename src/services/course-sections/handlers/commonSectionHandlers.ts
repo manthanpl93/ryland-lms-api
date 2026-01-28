@@ -47,13 +47,22 @@ export const createSection = async (
   }
 
   const course = await getCourseOutline(app, courseId);
+  
+  // Calculate next order value
+  const existingOutline = course.outline || [];
+  const maxOrder = existingOutline.length > 0
+    ? Math.max(...existingOutline.map((s: any) => s.order || 0))
+    : -1;
+  const nextOrder = maxOrder + 1;
+  
   const newSection = {
     category: "module",
     title: data.title,
+    order: nextOrder,
     lessons: data.lessons || [],
   };
 
-  const updatedOutline = [...(course.outline || []), newSection];
+  const updatedOutline = [...existingOutline, newSection];
   const updatedCourse = await updateCourseWithHash(app, courseId, updatedOutline);
 
   const createdSection = updatedCourse?.outline[updatedCourse.outline.length - 1];

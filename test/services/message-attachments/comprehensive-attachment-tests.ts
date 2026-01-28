@@ -1,34 +1,34 @@
 import assert from "assert";
 import app from "../../../src/app";
 import { clearTestDatabase } from "../../helpers/database";
-import { io as ioClient } from 'socket.io-client';
+import { io as ioClient } from "socket.io-client";
 
 // Helper function to check if dependencies are available
 function checkDependencies() {
   const missingDeps: string[] = [];
 
   try {
-    require('axios');
+    require("axios");
   } catch {
-    missingDeps.push('axios');
+    missingDeps.push("axios");
   }
 
   try {
-    require('cheerio');
+    require("cheerio");
   } catch {
-    missingDeps.push('cheerio');
+    missingDeps.push("cheerio");
   }
 
   try {
-    require('sharp');
+    require("sharp");
   } catch {
-    missingDeps.push('sharp');
+    missingDeps.push("sharp");
   }
 
   try {
-    require('file-type');
+    require("file-type");
   } catch {
-    missingDeps.push('file-type');
+    missingDeps.push("file-type");
   }
 
   return missingDeps;
@@ -53,7 +53,7 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
     missingDeps = checkDependencies();
 
     if (missingDeps.length > 0) {
-      console.log(`⚠️  Missing dependencies: ${missingDeps.join(', ')} - Some tests will be skipped`);
+      console.log(`⚠️  Missing dependencies: ${missingDeps.join(", ")} - Some tests will be skipped`);
     }
 
     // Use a different port to avoid conflicts
@@ -62,7 +62,7 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
 
     // Initialize chat socket
     app.set("server", server);
-    const initializeChatSocket = require('../../../src/socket/chatSocket');
+    const initializeChatSocket = require("../../../src/socket/chatSocket");
     initializeChatSocket(app);
 
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -140,7 +140,7 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
     it("should upload a real test image to S3 and verify acceptance", async function(this: Mocha.Context) {
       this.timeout(30000);
 
-      if (missingDeps.includes('axios')) {
+      if (missingDeps.includes("axios")) {
         console.log("⚠️  Skipping S3 test - missing axios dependency");
         this.skip();
         return;
@@ -148,36 +148,36 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
 
       // Create a small test image buffer (1x1 PNG)
       const testImageBuffer = Buffer.from(
-        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-        'base64'
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "base64"
       );
 
       const filename = `test-image-${Date.now()}.png`;
       const fileSize = testImageBuffer.length;
-      const mimeType = 'image/png';
+      const mimeType = "image/png";
 
       try {
-        const axios = require('axios');
+        const axios = require("axios");
 
         // Step 1: Request presigned URL from our service
-        const urlResponse = await app.service('message-attachments-upload').create({
-          controller: 'createPresignedUrl',
+        const urlResponse = await app.service("message-attachments-upload").create({
+          controller: "createPresignedUrl",
           filename,
           fileSize,
           mimeType,
-          attachmentType: 'image'
+          attachmentType: "image"
         }, {
           user: { _id: testStudent1Id }
         });
 
         assert.ok(urlResponse.signedUrl, "Presigned URL should be returned");
         assert.ok(urlResponse.objectUrl, "Object URL should be returned");
-        assert.strictEqual(urlResponse.metadata.type, 'image');
+        assert.strictEqual(urlResponse.metadata.type, "image");
 
         // Step 2: Upload to S3 using presigned URL (REAL UPLOAD)
         const uploadResponse = await axios.put(urlResponse.signedUrl, testImageBuffer, {
           headers: {
-            'Content-Type': mimeType,
+            "Content-Type": mimeType,
           },
           timeout: 10000
         });
@@ -191,11 +191,11 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
         });
 
         assert.strictEqual(verifyResponse.status, 200, "Uploaded file should be accessible");
-        assert.ok(verifyResponse.headers['content-type'], "File should have content-type");
+        assert.ok(verifyResponse.headers["content-type"], "File should have content-type");
 
         console.log("✅ Real S3 upload test passed - S3 is accepting our media");
       } catch (error: any) {
-        if (error.code === 'ECONNREFUSED' || error.message?.includes('network')) {
+        if (error.code === "ECONNREFUSED" || error.message?.includes("network")) {
           console.warn("⚠️  Network/S3 connection issue - skipping real upload test");
           this.skip();
         } else {
@@ -212,39 +212,39 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
 
       const socketUrl = `http://localhost:${server.address().port}`;
       student1Socket = ioClient(socketUrl, {
-        path: '/chat-socket/',
+        path: "/chat-socket/",
         query: { token: student1Token },
-        transports: ['websocket'],
+        transports: ["websocket"],
       });
 
       student2Socket = ioClient(socketUrl, {
-        path: '/chat-socket/',
+        path: "/chat-socket/",
         query: { token: student2Token },
-        transports: ['websocket'],
+        transports: ["websocket"],
       });
 
       const testAttachment = {
-        type: 'image',
-        url: 'https://example.com/test-image.jpg',
+        type: "image",
+        url: "https://example.com/test-image.jpg",
         metadata: {
-          filename: 'test-image.jpg',
+          filename: "test-image.jpg",
           size: 50000,
-          mimeType: 'image/jpeg',
+          mimeType: "image/jpeg",
           width: 800,
           height: 600,
-          thumbnail: 'https://example.com/test-image-thumb.jpg'
+          thumbnail: "https://example.com/test-image-thumb.jpg"
         }
       };
 
       let deliveredReceived = false;
       let recipientReceived = false;
 
-      student2Socket.on('message:receive', async (data: any) => {
+      student2Socket.on("message:receive", async (data: any) => {
         try {
           assert.ok(data.id, "Message should have ID");
           assert.ok(data.attachments, "Message should have attachments");
           assert.strictEqual(data.attachments.length, 1, "Should have 1 attachment");
-          assert.strictEqual(data.attachments[0].type, 'image', "Attachment should be image");
+          assert.strictEqual(data.attachments[0].type, "image", "Attachment should be image");
           assert.ok(data.attachments[0].metadata.thumbnail, "Image should have thumbnail");
 
           const messageId = data.id;
@@ -266,7 +266,7 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
         }
       });
 
-      student1Socket.on('message:delivered', (data: any) => {
+      student1Socket.on("message:delivered", (data: any) => {
         try {
           assert.ok(data.messageId, "Should have message ID");
           assert.ok(data.attachments, "Should include attachments");
@@ -276,13 +276,13 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
         }
       });
 
-      student1Socket.on('connect', () => {
+      student1Socket.on("connect", () => {
         setTimeout(() => {
-          student1Socket.emit('message:send', {
+          student1Socket.emit("message:send", {
             recipientId: testStudent2Id.toString(),
             content: "Test message with image",
             conversationId: testConversationId.toString(),
-            tempId: 'temp-123',
+            tempId: "temp-123",
             attachments: [testAttachment]
           });
         }, 500);
@@ -296,33 +296,33 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
 
       const testAttachments = [
         {
-          type: 'image',
-          url: 'https://example.com/test-image-2.jpg',
+          type: "image",
+          url: "https://example.com/test-image-2.jpg",
           metadata: {
-            filename: 'test-image-2.jpg',
+            filename: "test-image-2.jpg",
             size: 60000,
-            mimeType: 'image/jpeg',
+            mimeType: "image/jpeg",
             width: 1024,
             height: 768,
-            thumbnail: 'https://example.com/test-image-2-thumb.jpg'
+            thumbnail: "https://example.com/test-image-2-thumb.jpg"
           }
         },
         {
-          type: 'document',
-          url: 'https://example.com/test-doc.pdf',
+          type: "document",
+          url: "https://example.com/test-doc.pdf",
           metadata: {
-            filename: 'test-doc.pdf',
+            filename: "test-doc.pdf",
             size: 150000,
-            mimeType: 'application/pdf'
+            mimeType: "application/pdf"
           }
         }
       ];
 
-      student2Socket.on('message:receive', async (data: any) => {
+      student2Socket.on("message:receive", async (data: any) => {
         try {
           assert.strictEqual(data.attachments.length, 2, "Should have 2 attachments");
-          assert.strictEqual(data.attachments[0].type, 'image');
-          assert.strictEqual(data.attachments[1].type, 'document');
+          assert.strictEqual(data.attachments[0].type, "image");
+          assert.strictEqual(data.attachments[1].type, "document");
           assert.ok(data.attachments[0].metadata.thumbnail, "Image should have thumbnail");
 
           done();
@@ -332,11 +332,11 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
       });
 
       setTimeout(() => {
-        student1Socket.emit('message:send', {
+        student1Socket.emit("message:send", {
           recipientId: testStudent2Id.toString(),
           content: "Test message with multiple attachments",
           conversationId: testConversationId.toString(),
-          tempId: 'temp-124',
+          tempId: "temp-124",
           attachments: testAttachments
         });
       }, 1000);
@@ -347,13 +347,13 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
     it("should fetch link preview for valid URL", function(this: Mocha.Context, done) {
       this.timeout(10000);
 
-      if (missingDeps.includes('axios') || missingDeps.includes('cheerio')) {
+      if (missingDeps.includes("axios") || missingDeps.includes("cheerio")) {
         console.log("⚠️  Skipping link preview test - missing dependencies");
         this.skip();
         return;
       }
 
-      student1Socket.on('message:link-preview:result', (data: any) => {
+      student1Socket.on("message:link-preview:result", (data: any) => {
         try {
           assert.ok(data.tempId, "Should have tempId");
 
@@ -372,9 +372,9 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
       });
 
       setTimeout(() => {
-        student1Socket.emit('message:link-preview', {
-          url: 'https://www.example.com',
-          tempId: 'preview-123'
+        student1Socket.emit("message:link-preview", {
+          url: "https://www.example.com",
+          tempId: "preview-123"
         });
       }, 1000);
     });
@@ -382,7 +382,7 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
     it("should handle invalid URL gracefully", function(this: Mocha.Context, done) {
       this.timeout(10000);
 
-      student1Socket.on('message:link-preview:result', (data: any) => {
+      student1Socket.on("message:link-preview:result", (data: any) => {
         try {
           assert.ok(data.tempId, "Should have tempId");
           assert.ok(data.error, "Should have error for invalid URL");
@@ -393,9 +393,9 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
       });
 
       setTimeout(() => {
-        student1Socket.emit('message:link-preview', {
-          url: 'not-a-valid-url',
-          tempId: 'preview-456'
+        student1Socket.emit("message:link-preview", {
+          url: "not-a-valid-url",
+          tempId: "preview-456"
         });
       }, 1000);
     });
@@ -421,22 +421,22 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
       this.timeout(15000);
 
       const testAttachment = {
-        type: 'document',
-        url: 'https://example.com/reply-doc.pdf',
+        type: "document",
+        url: "https://example.com/reply-doc.pdf",
         metadata: {
-          filename: 'reply-doc.pdf',
+          filename: "reply-doc.pdf",
           size: 100000,
-          mimeType: 'application/pdf'
+          mimeType: "application/pdf"
         }
       };
 
-      student2Socket.on('message:reply:receive', async (data: any) => {
+      student2Socket.on("message:reply:receive", async (data: any) => {
         try {
           assert.ok(data.reply, "Should have reply metadata");
           assert.strictEqual(data.reply.messageId, originalMessageId);
           assert.ok(data.attachments, "Should have attachments");
           assert.strictEqual(data.attachments.length, 1);
-          assert.strictEqual(data.attachments[0].type, 'document');
+          assert.strictEqual(data.attachments[0].type, "document");
 
           done();
         } catch (error) {
@@ -445,12 +445,12 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
       });
 
       setTimeout(() => {
-        student1Socket.emit('message:reply', {
+        student1Socket.emit("message:reply", {
           recipientId: testStudent2Id.toString(),
           content: "Reply with attachment",
           conversationId: testConversationId.toString(),
           replyToMessageId: originalMessageId,
-          tempId: 'temp-reply-1',
+          tempId: "temp-reply-1",
           attachments: [testAttachment]
         });
       }, 1000);
@@ -473,9 +473,9 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
           content: `Image message ${i}`,
           status: { delivered: false, read: false },
           attachments: [{
-            type: 'image',
+            type: "image",
             url: `https://example.com/image-${i}.jpg`,
-            metadata: { filename: `image-${i}.jpg`, size: 50000, mimeType: 'image/jpeg', width: 800, height: 600, thumbnail: `https://example.com/thumb-${i}.jpg` }
+            metadata: { filename: `image-${i}.jpg`, size: 50000, mimeType: "image/jpeg", width: 800, height: 600, thumbnail: `https://example.com/thumb-${i}.jpg` }
           }]
         });
       }
@@ -489,9 +489,9 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
           content: `Document message ${i}`,
           status: { delivered: false, read: false },
           attachments: [{
-            type: 'document',
+            type: "document",
             url: `https://example.com/doc-${i}.pdf`,
-            metadata: { filename: `doc-${i}.pdf`, size: 100000, mimeType: 'application/pdf' }
+            metadata: { filename: `doc-${i}.pdf`, size: 100000, mimeType: "application/pdf" }
           }]
         });
       }
@@ -505,19 +505,19 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
           content: `Link message ${i}`,
           status: { delivered: false, read: false },
           attachments: [{
-            type: 'link',
+            type: "link",
             url: `https://example.com/page-${i}`,
-            metadata: { title: `Page ${i}`, description: 'Test page', url: `https://example.com/page-${i}` }
+            metadata: { title: `Page ${i}`, description: "Test page", url: `https://example.com/page-${i}` }
           }]
         });
       }
     });
 
     it("should filter by image type", async function() {
-      const result = await app.service('conversation-attachments').find({
+      const result = await app.service("conversation-attachments").find({
         query: {
           conversationId: testConversationId.toString(),
-          type: 'image',
+          type: "image",
           $limit: 50
         },
         user: { _id: testStudent1Id }
@@ -526,16 +526,16 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
       assert.ok(result.data, "Should have data");
       assert.ok(result.data.length >= 3, "Should have at least 3 image attachments");
       result.data.forEach((attachment: any) => {
-        assert.strictEqual(attachment.type, 'image');
+        assert.strictEqual(attachment.type, "image");
         assert.ok(attachment.metadata.thumbnail);
       });
     });
 
     it("should filter by document type", async function() {
-      const result = await app.service('conversation-attachments').find({
+      const result = await app.service("conversation-attachments").find({
         query: {
           conversationId: testConversationId.toString(),
-          type: 'document',
+          type: "document",
           $limit: 50
         },
         user: { _id: testStudent1Id }
@@ -543,15 +543,15 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
 
       assert.ok(result.data.length >= 2, "Should have at least 2 document attachments");
       result.data.forEach((attachment: any) => {
-        assert.strictEqual(attachment.type, 'document');
+        assert.strictEqual(attachment.type, "document");
       });
     });
 
     it("should filter by link type", async function() {
-      const result = await app.service('conversation-attachments').find({
+      const result = await app.service("conversation-attachments").find({
         query: {
           conversationId: testConversationId.toString(),
-          type: 'link',
+          type: "link",
           $limit: 50
         },
         user: { _id: testStudent1Id }
@@ -559,13 +559,13 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
 
       assert.ok(result.data.length >= 2, "Should have at least 2 link attachments");
       result.data.forEach((attachment: any) => {
-        assert.strictEqual(attachment.type, 'link');
+        assert.strictEqual(attachment.type, "link");
         assert.ok(attachment.metadata.title || attachment.metadata.url);
       });
     });
 
     it("should return all attachments without filter", async function() {
-      const result = await app.service('conversation-attachments').find({
+      const result = await app.service("conversation-attachments").find({
         query: {
           conversationId: testConversationId.toString(),
           $limit: 50
@@ -577,7 +577,7 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
     });
 
     it("should support pagination", async function() {
-      const page1 = await app.service('conversation-attachments').find({
+      const page1 = await app.service("conversation-attachments").find({
         query: {
           conversationId: testConversationId.toString(),
           $limit: 3,
@@ -586,7 +586,7 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
         user: { _id: testStudent1Id }
       });
 
-      const page2 = await app.service('conversation-attachments').find({
+      const page2 = await app.service("conversation-attachments").find({
         query: {
           conversationId: testConversationId.toString(),
           $limit: 3,
@@ -608,84 +608,84 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
 
   describe("7. Attachment Validation", () => {
     it("should reject oversized image (>10MB)", async function(this: Mocha.Context) {
-      if (missingDeps.includes('axios')) {
+      if (missingDeps.includes("axios")) {
         console.log("⚠️  Skipping validation test - missing axios dependency");
         this.skip();
         return;
       }
 
       try {
-        await app.service('message-attachments-upload').create({
-          controller: 'createPresignedUrl',
-          filename: 'huge-image.jpg',
+        await app.service("message-attachments-upload").create({
+          controller: "createPresignedUrl",
+          filename: "huge-image.jpg",
           fileSize: 15 * 1024 * 1024, // 15MB
-          mimeType: 'image/jpeg',
-          attachmentType: 'image'
+          mimeType: "image/jpeg",
+          attachmentType: "image"
         }, {
           user: { _id: testStudent1Id }
         });
 
         assert.fail("Should have thrown error for oversized image");
       } catch (error: any) {
-        assert.ok(error.message.includes('10MB') || error.message.includes('size'), "Error should mention size limit");
+        assert.ok(error.message.includes("10MB") || error.message.includes("size"), "Error should mention size limit");
       }
     });
 
     it("should reject oversized document (>25MB)", async function(this: Mocha.Context) {
-      if (missingDeps.includes('axios')) {
+      if (missingDeps.includes("axios")) {
         console.log("⚠️  Skipping validation test - missing axios dependency");
         this.skip();
         return;
       }
 
       try {
-        await app.service('message-attachments-upload').create({
-          controller: 'createPresignedUrl',
-          filename: 'huge-doc.pdf',
+        await app.service("message-attachments-upload").create({
+          controller: "createPresignedUrl",
+          filename: "huge-doc.pdf",
           fileSize: 30 * 1024 * 1024, // 30MB
-          mimeType: 'application/pdf',
-          attachmentType: 'document'
+          mimeType: "application/pdf",
+          attachmentType: "document"
         }, {
           user: { _id: testStudent1Id }
         });
 
         assert.fail("Should have thrown error for oversized document");
       } catch (error: any) {
-        assert.ok(error.message.includes('25MB') || error.message.includes('size'), "Error should mention size limit");
+        assert.ok(error.message.includes("25MB") || error.message.includes("size"), "Error should mention size limit");
       }
     });
 
     it("should reject invalid file type", async function(this: Mocha.Context) {
-      if (missingDeps.includes('axios')) {
+      if (missingDeps.includes("axios")) {
         console.log("⚠️  Skipping validation test - missing axios dependency");
         this.skip();
         return;
       }
 
       try {
-        await app.service('message-attachments-upload').create({
-          controller: 'createPresignedUrl',
-          filename: 'malware.exe',
+        await app.service("message-attachments-upload").create({
+          controller: "createPresignedUrl",
+          filename: "malware.exe",
           fileSize: 1000,
-          mimeType: 'application/x-msdownload',
-          attachmentType: 'document'
+          mimeType: "application/x-msdownload",
+          attachmentType: "document"
         }, {
           user: { _id: testStudent1Id }
         });
 
         assert.fail("Should have thrown error for invalid file type");
       } catch (error: any) {
-        assert.ok(error.message.includes('Invalid') || error.message.includes('type'), "Error should mention invalid type");
+        assert.ok(error.message.includes("Invalid") || error.message.includes("type"), "Error should mention invalid type");
       }
     });
 
     it("should reject message with malformed attachment via socket", function(this: Mocha.Context, done) {
       this.timeout(10000);
 
-      student1Socket.on('message:error', (data: any) => {
+      student1Socket.on("message:error", (data: any) => {
         try {
           assert.ok(data.error, "Should have error message");
-          assert.ok(data.error.includes('attachment') || data.error.includes('Invalid'), "Error should mention attachment");
+          assert.ok(data.error.includes("attachment") || data.error.includes("Invalid"), "Error should mention attachment");
           done();
         } catch (error) {
           done(error);
@@ -693,14 +693,14 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
       });
 
       setTimeout(() => {
-        student1Socket.emit('message:send', {
+        student1Socket.emit("message:send", {
           recipientId: testStudent2Id.toString(),
           content: "Test with bad attachment",
           conversationId: testConversationId.toString(),
-          tempId: 'temp-bad',
+          tempId: "temp-bad",
           attachments: [{
             // Missing required fields
-            type: 'image',
+            type: "image",
             // url missing
           }]
         });
@@ -732,7 +732,7 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
     it("should deny access to conversation attachments for non-participant", async function(this: Mocha.Context) {
       this.timeout(10000);
       try {
-        await app.service('conversation-attachments').find({
+        await app.service("conversation-attachments").find({
           query: {
             conversationId: testConversationId.toString()
           },
@@ -741,7 +741,7 @@ describe("Message Attachments Comprehensive Integration Tests", () => {
 
         assert.fail("Should have thrown error for non-participant");
       } catch (error: any) {
-        assert.ok(error.message.includes('Forbidden') || error.message.includes('participant'), "Should deny access");
+        assert.ok(error.message.includes("Forbidden") || error.message.includes("participant"), "Should deny access");
       }
     });
   });

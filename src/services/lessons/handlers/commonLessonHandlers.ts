@@ -63,9 +63,17 @@ export const createLesson = async (
     throw new BadRequest("Section not found");
   }
 
+  // Calculate next order value for this section
+  const existingLessons = outline[sectionIndex].lessons || [];
+  const maxOrder = existingLessons.length > 0
+    ? Math.max(...existingLessons.map((l: any) => l.order || 0))
+    : -1;
+  const nextOrder = maxOrder + 1;
+
   const newLesson: any = {
     category: "lesson",
     title: data.title,
+    order: nextOrder,
     contentType: data.contentType || "text",
     type: data.type || "content",
     resource: data.resource,
@@ -87,7 +95,6 @@ export const createLesson = async (
     quizRewards: data.quizRewards,
   };
 
-  const existingLessons = outline[sectionIndex].lessons || [];
   outline[sectionIndex].lessons = [...existingLessons, newLesson];
 
   const updatedCourse = await updateCourseWithHash(app, courseId, outline);

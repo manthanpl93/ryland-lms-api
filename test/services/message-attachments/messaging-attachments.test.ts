@@ -7,27 +7,27 @@ function checkDependencies() {
   const missingDeps: string[] = [];
 
   try {
-    require('axios');
+    require("axios");
   } catch {
-    missingDeps.push('axios');
+    missingDeps.push("axios");
   }
 
   try {
-    require('cheerio');
+    require("cheerio");
   } catch {
-    missingDeps.push('cheerio');
+    missingDeps.push("cheerio");
   }
 
   try {
-    require('sharp');
+    require("sharp");
   } catch {
-    missingDeps.push('sharp');
+    missingDeps.push("sharp");
   }
 
   try {
-    require('file-type');
+    require("file-type");
   } catch {
-    missingDeps.push('file-type');
+    missingDeps.push("file-type");
   }
 
   return missingDeps;
@@ -48,7 +48,7 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
     this.timeout(30000);
 
     if (missingDeps.length > 0) {
-      console.log(`⚠️  Missing dependencies: ${missingDeps.join(', ')} - Some tests will be skipped or mocked`);
+      console.log(`⚠️  Missing dependencies: ${missingDeps.join(", ")} - Some tests will be skipped or mocked`);
     }
 
     // Use a different port to avoid conflicts
@@ -57,7 +57,7 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
 
     // Initialize chat socket
     app.set("server", server);
-    const initializeChatSocket = require('../../../src/socket/chatSocket');
+    const initializeChatSocket = require("../../../src/socket/chatSocket");
     initializeChatSocket(app);
 
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -132,24 +132,24 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
       status: { delivered: false, read: false },
       attachments: [
         {
-          type: 'image',
-          url: 'https://example.com/test.jpg',
+          type: "image",
+          url: "https://example.com/test.jpg",
           metadata: {
-            filename: 'test.jpg',
+            filename: "test.jpg",
             size: 50000,
-            mimeType: 'image/jpeg',
+            mimeType: "image/jpeg",
             width: 800,
             height: 600,
-            thumbnail: 'https://example.com/thumb.jpg'
+            thumbnail: "https://example.com/thumb.jpg"
           }
         },
         {
-          type: 'document',
-          url: 'https://example.com/test.pdf',
+          type: "document",
+          url: "https://example.com/test.pdf",
           metadata: {
-            filename: 'test.pdf',
+            filename: "test.pdf",
             size: 100000,
-            mimeType: 'application/pdf'
+            mimeType: "application/pdf"
           }
         }
       ]
@@ -210,19 +210,19 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
     it("should validate attachment structure", () => {
       // Test basic attachment structure validation
       const validAttachment = {
-        type: 'image',
-        url: 'https://example.com/test.jpg',
+        type: "image",
+        url: "https://example.com/test.jpg",
         metadata: {
-          filename: 'test.jpg',
+          filename: "test.jpg",
           size: 50000,
-          mimeType: 'image/jpeg',
+          mimeType: "image/jpeg",
           width: 800,
           height: 600,
-          thumbnail: 'https://example.com/thumb.jpg'
+          thumbnail: "https://example.com/thumb.jpg"
         }
       };
 
-      assert.strictEqual(validAttachment.type, 'image');
+      assert.strictEqual(validAttachment.type, "image");
       assert.ok(validAttachment.url);
       assert.ok(validAttachment.metadata);
       assert.ok(validAttachment.metadata.thumbnail);
@@ -230,16 +230,16 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
 
     it("should validate document attachment structure", () => {
       const validDocument = {
-        type: 'document',
-        url: 'https://example.com/test.pdf',
+        type: "document",
+        url: "https://example.com/test.pdf",
         metadata: {
-          filename: 'test.pdf',
+          filename: "test.pdf",
           size: 100000,
-          mimeType: 'application/pdf'
+          mimeType: "application/pdf"
         }
       };
 
-      assert.strictEqual(validDocument.type, 'document');
+      assert.strictEqual(validDocument.type, "document");
       assert.ok(validDocument.url);
       assert.ok(validDocument.metadata);
       assert.ok(validDocument.metadata.filename);
@@ -247,17 +247,17 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
 
     it("should validate link attachment structure", () => {
       const validLink = {
-        type: 'link',
-        url: 'https://example.com/article',
+        type: "link",
+        url: "https://example.com/article",
         metadata: {
-          title: 'Test Article',
-          description: 'Test description',
-          siteName: 'Test Site',
-          url: 'https://example.com/article'
+          title: "Test Article",
+          description: "Test description",
+          siteName: "Test Site",
+          url: "https://example.com/article"
         }
       };
 
-      assert.strictEqual(validLink.type, 'link');
+      assert.strictEqual(validLink.type, "link");
       assert.ok(validLink.url);
       assert.ok(validLink.metadata);
       assert.ok(validLink.metadata.title);
@@ -273,8 +273,8 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
       assert.ok(savedMessage.attachments, "Message should have attachments");
       assert.strictEqual(savedMessage.attachments.length, 2, "Should have 2 attachments");
 
-      const imageAttachment = savedMessage.attachments.find((a: any) => a.type === 'image');
-      const docAttachment = savedMessage.attachments.find((a: any) => a.type === 'document');
+      const imageAttachment = savedMessage.attachments.find((a: any) => a.type === "image");
+      const docAttachment = savedMessage.attachments.find((a: any) => a.type === "document");
 
       assert.ok(imageAttachment, "Should have image attachment");
       assert.ok(docAttachment, "Should have document attachment");
@@ -314,39 +314,39 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
   describe("MIME Type Validation", () => {
     it("should accept valid image MIME types", () => {
       const validImageTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-        'image/heic'
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/heic"
       ];
 
       validImageTypes.forEach(type => {
-        assert.ok(type.startsWith('image/'), `Valid image type: ${type}`);
+        assert.ok(type.startsWith("image/"), `Valid image type: ${type}`);
       });
     });
 
     it("should accept valid document MIME types", () => {
       const validDocTypes = [
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       ];
 
       validDocTypes.forEach(type => {
-        assert.ok(type.includes('pdf') || type.includes('document') || type.includes('sheet'), `Valid document type: ${type}`);
+        assert.ok(type.includes("pdf") || type.includes("document") || type.includes("sheet"), `Valid document type: ${type}`);
       });
     });
 
     it("should reject invalid MIME types", () => {
       const invalidTypes = [
-        'application/x-msdownload', // .exe
-        'application/x-shockwave-flash', // .swf
-        'text/html'
+        "application/x-msdownload", // .exe
+        "application/x-shockwave-flash", // .swf
+        "text/html"
       ];
 
       invalidTypes.forEach(type => {
-        assert.ok(!type.startsWith('image/') && !type.includes('pdf') && !type.includes('document'), `Invalid type should be rejected: ${type}`);
+        assert.ok(!type.startsWith("image/") && !type.includes("pdf") && !type.includes("document"), `Invalid type should be rejected: ${type}`);
       });
     });
   });
@@ -360,15 +360,15 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
 
       assert.ok(urls, "Should find URLs");
       assert.strictEqual(urls.length, 2, "Should find 2 URLs");
-      assert.ok(urls.includes('https://example.com'), "Should include first URL");
-      assert.ok(urls.includes('https://test.com/page'), "Should include second URL");
+      assert.ok(urls.includes("https://example.com"), "Should include first URL");
+      assert.ok(urls.includes("https://test.com/page"), "Should include second URL");
     });
 
     it("should validate URL format", () => {
       const validUrls = [
-        'https://example.com',
-        'http://test.com',
-        'https://sub.example.com/path?query=value'
+        "https://example.com",
+        "http://test.com",
+        "https://sub.example.com/path?query=value"
       ];
 
       const urlRegex = /^https?:\/\/.+/;
@@ -378,9 +378,9 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
       });
 
       const invalidUrls = [
-        'not-a-url',
-        'ftp://example.com',
-        'example.com'
+        "not-a-url",
+        "ftp://example.com",
+        "example.com"
       ];
 
       invalidUrls.forEach(url => {
@@ -392,43 +392,43 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
   describe("Attachment Metadata Structure", () => {
     it("should validate image metadata structure", () => {
       const imageMetadata = {
-        filename: 'test.jpg',
+        filename: "test.jpg",
         size: 50000,
-        mimeType: 'image/jpeg',
+        mimeType: "image/jpeg",
         width: 800,
         height: 600,
-        thumbnail: 'https://example.com/thumb.jpg'
+        thumbnail: "https://example.com/thumb.jpg"
       };
 
       assert.ok(imageMetadata.filename);
-      assert.ok(typeof imageMetadata.size === 'number');
-      assert.ok(imageMetadata.mimeType.startsWith('image/'));
-      assert.ok(typeof imageMetadata.width === 'number');
-      assert.ok(typeof imageMetadata.height === 'number');
+      assert.ok(typeof imageMetadata.size === "number");
+      assert.ok(imageMetadata.mimeType.startsWith("image/"));
+      assert.ok(typeof imageMetadata.width === "number");
+      assert.ok(typeof imageMetadata.height === "number");
       assert.ok(imageMetadata.thumbnail);
     });
 
     it("should validate document metadata structure", () => {
       const docMetadata = {
-        filename: 'test.pdf',
+        filename: "test.pdf",
         size: 100000,
-        mimeType: 'application/pdf',
+        mimeType: "application/pdf",
         pageCount: 10 // optional
       };
 
       assert.ok(docMetadata.filename);
-      assert.ok(typeof docMetadata.size === 'number');
-      assert.ok(docMetadata.mimeType.includes('pdf') || docMetadata.mimeType.includes('document'));
+      assert.ok(typeof docMetadata.size === "number");
+      assert.ok(docMetadata.mimeType.includes("pdf") || docMetadata.mimeType.includes("document"));
       // pageCount is optional
     });
 
     it("should validate link metadata structure", () => {
       const linkMetadata = {
-        title: 'Test Article',
-        description: 'Test description',
-        image: 'https://example.com/image.jpg', // optional
-        siteName: 'Test Site', // optional
-        url: 'https://example.com/article'
+        title: "Test Article",
+        description: "Test description",
+        image: "https://example.com/image.jpg", // optional
+        siteName: "Test Site", // optional
+        url: "https://example.com/article"
       };
 
       assert.ok(linkMetadata.title);
@@ -441,47 +441,47 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
   describe("S3 Upload Simulation", () => {
     it("should validate presigned URL structure", () => {
       // Mock presigned URL validation
-      const mockPresignedUrl = 'https://cdn.example.com/upload?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAEXAMPLE%2F20240101%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240101T000000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=example';
+      const mockPresignedUrl = "https://cdn.example.com/upload?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAEXAMPLE%2F20240101%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240101T000000Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=example";
 
-      assert.ok(mockPresignedUrl.includes('https://'), "Should be HTTPS");
-      assert.ok(mockPresignedUrl.includes('X-Amz-Algorithm'), "Should have AWS signature params");
-      assert.ok(mockPresignedUrl.includes('X-Amz-Credential'), "Should have credentials");
-      assert.ok(mockPresignedUrl.includes('X-Amz-Signature'), "Should have signature");
+      assert.ok(mockPresignedUrl.includes("https://"), "Should be HTTPS");
+      assert.ok(mockPresignedUrl.includes("X-Amz-Algorithm"), "Should have AWS signature params");
+      assert.ok(mockPresignedUrl.includes("X-Amz-Credential"), "Should have credentials");
+      assert.ok(mockPresignedUrl.includes("X-Amz-Signature"), "Should have signature");
     });
 
     it("should validate S3 object URL structure", () => {
-      const mockObjectUrl = 'https://cdn.example.com/message-attachments/user123/1704067200-test.jpg';
+      const mockObjectUrl = "https://cdn.example.com/message-attachments/user123/1704067200-test.jpg";
 
-      assert.ok(mockObjectUrl.includes('https://'), "Should be HTTPS");
-      assert.ok(mockObjectUrl.includes('message-attachments'), "Should include bucket path");
+      assert.ok(mockObjectUrl.includes("https://"), "Should be HTTPS");
+      assert.ok(mockObjectUrl.includes("message-attachments"), "Should include bucket path");
       assert.ok(/\d{10}/.test(mockObjectUrl), "Should include timestamp");
     });
 
     it("should validate S3 thumbnail URL structure", () => {
-      const mockThumbnailUrl = 'https://cdn.example.com/message-attachments/user123/thumbnails/1704067200-thumb-test.jpg';
+      const mockThumbnailUrl = "https://cdn.example.com/message-attachments/user123/thumbnails/1704067200-thumb-test.jpg";
 
-      assert.ok(mockThumbnailUrl.includes('thumbnails'), "Should include thumbnails path");
-      assert.ok(mockThumbnailUrl.includes('thumb-'), "Should include thumb prefix");
+      assert.ok(mockThumbnailUrl.includes("thumbnails"), "Should include thumbnails path");
+      assert.ok(mockThumbnailUrl.includes("thumb-"), "Should include thumb prefix");
     });
   });
 
   describe("Socket Event Structure", () => {
     it("should validate message:send event structure", () => {
       const sendEvent = {
-        recipientId: 'user123',
-        content: 'Test message',
-        conversationId: 'conv123',
-        tempId: 'temp-123',
+        recipientId: "user123",
+        content: "Test message",
+        conversationId: "conv123",
+        tempId: "temp-123",
         attachments: [{
-          type: 'image',
-          url: 'https://example.com/test.jpg',
+          type: "image",
+          url: "https://example.com/test.jpg",
           metadata: {
-            filename: 'test.jpg',
+            filename: "test.jpg",
             size: 50000,
-            mimeType: 'image/jpeg',
+            mimeType: "image/jpeg",
             width: 800,
             height: 600,
-            thumbnail: 'https://example.com/thumb.jpg'
+            thumbnail: "https://example.com/thumb.jpg"
           }
         }]
       };
@@ -496,20 +496,20 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
 
     it("should validate message:receive event structure", () => {
       const receiveEvent = {
-        id: 'msg123',
-        content: 'Test message',
-        senderId: 'user456',
+        id: "msg123",
+        content: "Test message",
+        senderId: "user456",
         timestamp: new Date().toISOString(),
         attachments: [{
-          type: 'image',
-          url: 'https://example.com/test.jpg',
+          type: "image",
+          url: "https://example.com/test.jpg",
           metadata: {
-            filename: 'test.jpg',
+            filename: "test.jpg",
             size: 50000,
-            mimeType: 'image/jpeg',
+            mimeType: "image/jpeg",
             width: 800,
             height: 600,
-            thumbnail: 'https://example.com/thumb.jpg'
+            thumbnail: "https://example.com/thumb.jpg"
           }
         }]
       };
@@ -523,30 +523,30 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
 
     it("should validate message:link-preview event structure", () => {
       const previewEvent = {
-        url: 'https://example.com/article',
-        tempId: 'preview-123'
+        url: "https://example.com/article",
+        tempId: "preview-123"
       };
 
       assert.ok(previewEvent.url);
       assert.ok(previewEvent.tempId);
-      assert.ok(previewEvent.url.startsWith('http'));
+      assert.ok(previewEvent.url.startsWith("http"));
     });
   });
 
   describe("Error Handling", () => {
     it("should handle invalid attachment types", () => {
       const invalidAttachment = {
-        type: 'invalid',
-        url: 'https://example.com/test.xyz'
+        type: "invalid",
+        url: "https://example.com/test.xyz"
       };
 
-      const validTypes = ['image', 'link', 'document'];
+      const validTypes = ["image", "link", "document"];
       assert.ok(!validTypes.includes(invalidAttachment.type), "Invalid type should be rejected");
     });
 
     it("should handle missing required fields", () => {
       const incompleteAttachment: any = {
-        type: 'image'
+        type: "image"
         // missing url and metadata
       };
 
@@ -578,8 +578,8 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
     it("should validate query efficiency", () => {
       // Compound index validation (conversationId + type)
       const query = {
-        conversationId: 'conv123',
-        type: 'image',
+        conversationId: "conv123",
+        type: "image",
         $limit: 20
       };
 
@@ -595,9 +595,9 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
       const components = {
         messagesModel: app.get("mongooseClient").models.messages,
         // conversationAttachmentsModel: app.get("mongooseClient").models['conversation-attachments'], // Temporarily disabled
-        attachmentTypes: ['image', 'link', 'document'],
-        sizeLimits: { image: '10MB', document: '25MB' },
-        features: ['thumbnail', 'link-preview', 'filtering', 'pagination', 'validation']
+        attachmentTypes: ["image", "link", "document"],
+        sizeLimits: { image: "10MB", document: "25MB" },
+        features: ["thumbnail", "link-preview", "filtering", "pagination", "validation"]
       };
 
       assert.ok(components.messagesModel, "Messages model exists");
@@ -608,10 +608,10 @@ describe("Message Attachments - Comprehensive Test Suite", () => {
       assert.strictEqual(components.features.length, 5, "All features implemented");
 
       console.log("✅ Message Attachments Implementation - CORE TESTS PASSED");
-      console.log(`📊 Core components verified: Messages model + attachment types`);
+      console.log("📊 Core components verified: Messages model + attachment types");
       console.log(`🎯 Features implemented: ${components.features.length}`);
-      console.log(`📁 Attachment types: ${components.attachmentTypes.join(', ')}`);
-      console.log(`📝 Note: Conversation attachments service temporarily disabled due to TypeScript issues`);
+      console.log(`📁 Attachment types: ${components.attachmentTypes.join(", ")}`);
+      console.log("📝 Note: Conversation attachments service temporarily disabled due to TypeScript issues");
     });
   });
 });
