@@ -123,7 +123,7 @@ const getStudentCourses = async (
 
   const courses = await publishedCoursesModel
     .find(searchQuery)
-    .select("mainCourse title courseImage")
+    .select("mainCourse title courseImage outline")
     .sort({ _id: -1 })
     .skip(Number(skip))
     .limit(Number(limit))
@@ -148,12 +148,54 @@ const getStudentCourses = async (
     progressData.map((p: any) => [p.courseId.toString(), p.progressPercentage || 0])
   );
 
+  /**
+   * Calculate total points for a course by summing deadline points and quiz reward points
+   * from all lessons in the course outline
+   */
+  const calculateTotalPoints = (outline: any[]): number => {
+    if (!outline || !Array.isArray(outline)) {
+      return 0;
+    }
+
+    let totalPoints = 0;
+
+    outline.forEach((item: any) => {
+      // If it's a module, iterate through its lessons
+      if (item.category === "module" && item.lessons && Array.isArray(item.lessons)) {
+        item.lessons.forEach((lesson: any) => {
+          // Add deadline points if enabled
+          if (lesson.deadlinePointsEnabled && lesson.deadlinePoints) {
+            totalPoints += lesson.deadlinePoints;
+          }
+          // Add quiz reward points if available
+          if (lesson.quizRewards?.additionalPoints) {
+            totalPoints += lesson.quizRewards.additionalPoints;
+          }
+        });
+      }
+      // If it's a standalone lesson (not in a module)
+      else if (item.category === "lesson") {
+        // Add deadline points if enabled
+        if (item.deadlinePointsEnabled && item.deadlinePoints) {
+          totalPoints += item.deadlinePoints;
+        }
+        // Add quiz reward points if available
+        if (item.quizRewards?.additionalPoints) {
+          totalPoints += item.quizRewards.additionalPoints;
+        }
+      }
+    });
+
+    return totalPoints;
+  };
+
   // Format the response with only required fields
   const data = courses.map((course: any) => ({
     courseId: course.mainCourse,
     image: course.courseImage,
     title: course.title,
-    progress: progressMap.get(course.mainCourse.toString()) || 0
+    progress: progressMap.get(course.mainCourse.toString()) || 0,
+    totalPoints: calculateTotalPoints(course.outline || [])
   }));
 
   return {

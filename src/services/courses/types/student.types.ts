@@ -41,6 +41,7 @@ export interface StudentCourseItem {
   };
   title: string;
   progress: number;
+  totalPoints: number;
 }
 
 // Student course find response
