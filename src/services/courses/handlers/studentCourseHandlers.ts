@@ -140,12 +140,15 @@ const getStudentCourses = async (
       userId: studentId,
       courseId: { $in: courseIds }
     })
-    .select("courseId progressPercentage")
+    .select("courseId progressPercentage accumulatedPoints")
     .lean();
 
-  // Create a map for quick lookup
+  // Create maps for quick lookup
   const progressMap = new Map(
     progressData.map((p: any) => [p.courseId.toString(), p.progressPercentage || 0])
+  );
+  const accumulatedPointsMap = new Map(
+    progressData.map((p: any) => [p.courseId.toString(), p.accumulatedPoints || 0])
   );
 
   /**
@@ -195,7 +198,8 @@ const getStudentCourses = async (
     image: course.courseImage,
     title: course.title,
     progress: progressMap.get(course.mainCourse.toString()) || 0,
-    totalPoints: calculateTotalPoints(course.outline || [])
+    totalPoints: calculateTotalPoints(course.outline || []),
+    accumulatedPoints: accumulatedPointsMap.get(course.mainCourse.toString()) || 0
   }));
 
   return {

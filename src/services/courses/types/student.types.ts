@@ -42,6 +42,7 @@ export interface StudentCourseItem {
   title: string;
   progress: number;
   totalPoints: number;
+  accumulatedPoints: number;
 }
 
 // Student course find response
