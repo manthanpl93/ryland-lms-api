@@ -32,6 +32,8 @@ import {
 
 import studentProgressModel from "../../models/student-progress.model";
 import createPublishedCoursesModel from "../../models/published-courses.model";
+import createCoursesModel from "../../models/courses.model";
+import createClassEnrollmentsModel from "../../models/class-enrollments.model";
 import { sendNotificationForCourseCompletion } from "../../utils/utilities";
 import { triggerNotifications } from "../../utils/notification-manager/action-gateway";
 import { NotificationConstants } from "../../utils/constants";
@@ -40,6 +42,7 @@ import { generatePDF } from "../../utils/pdf-generator";
 import { uploadFileToS3 } from "../../utils/utilities";
 import usersModel from "../../models/users.model";
 import categoriesModel from "../../models/categories.model";
+import { LeaderboardService } from "../../cache/redis";
 
 export class CourseLessons extends Service {
   app: Application;
@@ -639,11 +642,71 @@ export class CourseLessons extends Service {
       );
     }
 
+    // Update Redis leaderboard if points were awarded
+    if (actualPointsToAdd > 0) {
+      await this.updateLeaderboard(request.courseId, userId, actualPointsToAdd);
+    }
+
     return {
       progressPercentage,
       lessonId: request.lessonId,
       moduleId: request.moduleId,
     };
+  }
+
+  /**
+   * Update Redis leaderboard for class when student earns points
+   * 
+   * @param courseId - The course ID
+   * @param userId - The student user ID
+   * @param pointsEarned - Points earned from completing the lesson
+   */
+  private async updateLeaderboard(
+    courseId: string,
+    userId: string,
+    pointsEarned: number
+  ): Promise<void> {
+    try {
+      // Get course's classId
+      const coursesModel = createCoursesModel(this.app);
+      const course = await coursesModel
+        .findById(courseId)
+        .select("classId")
+        .lean();
+
+      if (!course?.classId) {
+        // Course not assigned to any class, skip leaderboard update
+        return;
+      }
+
+      const classId = course.classId.toString();
+
+      // Verify student is enrolled in this class
+      const classEnrollmentsModel = createClassEnrollmentsModel(this.app);
+      const enrollment = await classEnrollmentsModel
+        .findOne({
+          studentId: userId,
+          classId: classId,
+          status: "Active",
+        })
+        .lean();
+
+      if (!enrollment) {
+        // Student not enrolled in this class, skip leaderboard update
+        return;
+      }
+
+      // Update Redis leaderboard
+      const leaderboardService = new LeaderboardService(this.app);
+      await leaderboardService.updateScore(classId, userId, pointsEarned);
+    } catch (error) {
+      // Log error but don't throw - graceful degradation
+      // Leaderboard update failure shouldn't break lesson completion
+      console.error(
+        `[CourseLessons] Error updating leaderboard for course ${courseId}, user ${userId}:`,
+        error
+      );
+    }
   }
 
   /**

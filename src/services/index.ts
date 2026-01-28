@@ -22,6 +22,7 @@ import signup from "./signup/signup.service";
 import classes from "./classes/classes.service";
 import classEnrollments from "./class-enrollments/class-enrollments.service";
 import classTeachers from "./class-teachers/class-teachers.service";
+import classLeaderboard from "./class-leaderboard/class-leaderboard.service";
 import courseSections from "./course-sections/course-sections.service";
 import courseSectionsReorder from "./course-sections-reorder/course-sections-reorder.service";
 import lessons from "./lessons/lessons.service";
@@ -75,6 +76,7 @@ export default function (app: Application): void {
   app.configure(classes);
   app.configure(classEnrollments);
   app.configure(classTeachers);
+  app.configure(classLeaderboard);
   app.configure(courseSections);
   app.configure(courseSectionsReorder);
   app.configure(lessons);
