@@ -20,6 +20,7 @@ export interface ProgressResult {
     passed: boolean;
     score: number;
   };
+  pointsAwarded?: number;
 }
 
 export interface ProgressInfo {

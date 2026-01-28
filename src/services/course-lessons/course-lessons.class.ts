@@ -268,8 +268,19 @@ export class CourseLessons extends Service {
         }
       }
 
-      // Update student progress
-      const courseProgress = await this.updateStudentProgress(data, userId);
+      // Calculate points if lesson is being completed
+      let pointsToAward = 0;
+      if (data.status === "completed") {
+        // Fetch lesson metadata to calculate points
+        const lessonMetadata = await this.getLessonMetadata(
+          data.courseId,
+          data.lessonId
+        );
+        pointsToAward = this.calculateLessonPoints(lessonMetadata);
+      }
+
+      // Update student progress with points
+      const courseProgress = await this.updateStudentProgress(data, userId, pointsToAward);
 
       // Handle course completion notifications
       if (courseProgress.progressPercentage === 100) {
@@ -285,6 +296,11 @@ export class CourseLessons extends Service {
       // Add quiz results if this was a quiz attempt
       if (quizResult) {
         result.quiz = quizResult;
+      }
+
+      // Add points awarded if lesson was completed
+      if (data.status === "completed" && pointsToAward > 0) {
+        result.pointsAwarded = pointsToAward;
       }
 
       return result;
@@ -449,14 +465,17 @@ export class CourseLessons extends Service {
    * - Module-based lesson progress (no standalone lessons)
    * - Progress calculation and updates
    * - Course completion tracking
+   * - Points accumulation (lesson and course level)
    *
    * @param request - Lesson attempt request
    * @param userId - User ID
+   * @param pointsToAdd - Points to award for this lesson (only if first completion)
    * @returns Updated course progress
    */
   private async updateStudentProgress(
     request: LessonAttemptData,
-    userId: string
+    userId: string,
+    pointsToAdd: number = 0
   ): Promise<ProgressResult> {
     // Find student progress for user and course
     let studentProgress = await studentProgressModel(this.app)
@@ -511,6 +530,30 @@ export class CourseLessons extends Service {
       studentProgress.progressHistory || []
     );
 
+    // Check if lesson is already completed (to avoid double-awarding points)
+    let isLessonAlreadyCompleted = false;
+    if (request.status === "completed" && pointsToAdd > 0) {
+      const progressHistory = studentProgress.progressHistory || [];
+      for (const moduleProgress of progressHistory) {
+        if (
+          moduleProgress.moduleId?.toString() === request.moduleId &&
+          moduleProgress.category === "module" &&
+          moduleProgress.lessons
+        ) {
+          const existingLesson = moduleProgress.lessons.find(
+            (lesson: any) => lesson.lessonId?.toString() === request.lessonId
+          );
+          if (existingLesson && existingLesson.completed === "yes") {
+            isLessonAlreadyCompleted = true;
+            break;
+          }
+        }
+      }
+    }
+
+    // Only award points if lesson is being completed for the first time
+    const actualPointsToAdd = isLessonAlreadyCompleted ? 0 : pointsToAdd;
+
     // Create a copy of progress history to avoid mutating the original
     const progressHistoryCopy = JSON.parse(
       JSON.stringify(studentProgress.progressHistory || [])
@@ -520,7 +563,8 @@ export class CourseLessons extends Service {
     const updatedProgress = await this.handleModuleLessonProgress(
       progressHistoryCopy,
       request,
-      currentCompletedLessons
+      currentCompletedLessons,
+      actualPointsToAdd
     );
 
     const progressPercentage = await this.calculateProgressPercentage(
@@ -546,33 +590,47 @@ export class CourseLessons extends Service {
       );
 
       // Update with certificate info
+      const updateOperation: any = {
+        $set: {
+          progressPercentage,
+          lastWatchedLesson: request.lessonId,
+          lastWatchedModule: request.moduleId,
+          completedAt,
+          cleared: true,
+          certificateUrl,
+          progressHistory: updatedProgress.progressHistory,
+        },
+      };
+
+      // Increment accumulated points if points were awarded
+      if (actualPointsToAdd > 0) {
+        updateOperation.$inc = { accumulatedPoints: actualPointsToAdd };
+      }
+
       await studentProgressModel(this.app).updateOne(
         { _id: studentProgress._id },
-        {
-          $set: {
-            progressPercentage,
-            lastWatchedLesson: request.lessonId,
-            lastWatchedModule: request.moduleId,
-            completedAt,
-            cleared: true,
-            certificateUrl,
-            progressHistory: updatedProgress.progressHistory,
-          },
-        }
+        updateOperation
       );
     } else {
       // Regular update without certificate
+      const updateOperation: any = {
+        $set: {
+          progressPercentage,
+          lastWatchedLesson: request.lessonId,
+          lastWatchedModule: request.moduleId,
+          completedAt,
+          progressHistory: updatedProgress.progressHistory,
+        },
+      };
+
+      // Increment accumulated points if points were awarded
+      if (actualPointsToAdd > 0) {
+        updateOperation.$inc = { accumulatedPoints: actualPointsToAdd };
+      }
+
       await studentProgressModel(this.app).updateOne(
         { _id: studentProgress._id },
-        {
-          $set: {
-            progressPercentage,
-            lastWatchedLesson: request.lessonId,
-            lastWatchedModule: request.moduleId,
-            completedAt,
-            progressHistory: updatedProgress.progressHistory,
-          },
-        }
+        updateOperation
       );
     }
 
@@ -594,7 +652,8 @@ export class CourseLessons extends Service {
   private async handleModuleLessonProgress(
     progressHistory: any[],
     request: LessonAttemptData,
-    currentLecturesAttempted: number
+    currentLecturesAttempted: number,
+    pointsToAdd: number = 0
   ): Promise<{ progressHistory: any[]; lecturesAttempted: number }> {
     // Find or create module progress
     let moduleProgress = progressHistory.find(
@@ -640,6 +699,7 @@ export class CourseLessons extends Service {
         completed: request.status === "completed" ? "yes" : "no",
         lastAttempted: new Date(),
         finishDate: request.status === "completed" ? new Date() : null,
+        pointsEarned: request.status === "completed" ? pointsToAdd : 0,
       };
       moduleProgress.lessons.push(lessonProgress);
 
@@ -667,6 +727,10 @@ export class CourseLessons extends Service {
         lessonProgress.completed = "yes";
         lessonProgress.finishDate = new Date();
         lessonProgress.lastAttempted = new Date();
+        // Set pointsEarned only if not already set (first completion)
+        if (pointsToAdd > 0 && (!lessonProgress.pointsEarned || lessonProgress.pointsEarned === 0)) {
+          lessonProgress.pointsEarned = pointsToAdd;
+        }
         moduleProgress.totalLessonsFinished++;
         currentLecturesAttempted++;
       }
@@ -998,6 +1062,53 @@ export class CourseLessons extends Service {
     }
 
     return lesson;
+  }
+
+  /**
+   * Calculate points to be awarded for a completed lesson
+   * 
+   * Points are calculated based on:
+   * 1. Deadline points (only if deadline not crossed)
+   * 2. Quiz additional points (if quiz type)
+   * 3. Badge points (if quiz type with badge)
+   * 
+   * @param lesson - Lesson metadata from published course
+   * @returns Total points to be awarded
+   */
+  private calculateLessonPoints(lesson: any): number {
+    let points = 0;
+
+    // Deadline points (only if deadline not crossed)
+    if (lesson.deadlinePointsEnabled && lesson.deadlinePoints) {
+      if (lesson.deadlineDate) {
+        const deadlineDate = new Date(lesson.deadlineDate);
+        const currentDate = new Date();
+        // Only award deadline points if deadline hasn't passed
+        if (currentDate < deadlineDate) {
+          points += lesson.deadlinePoints;
+        }
+      } else {
+        // If deadlinePointsEnabled but no deadlineDate, still award points
+        points += lesson.deadlinePoints;
+      }
+    }
+
+    // Quiz additional points (only for quiz lessons)
+    if (lesson.type === "quiz" && lesson.quizRewards?.additionalPoints) {
+      points += lesson.quizRewards.additionalPoints;
+    }
+
+    // Badge points (only for quiz lessons with badges)
+    if (lesson.type === "quiz" && lesson.quizRewards?.badge && lesson.quizRewards.badge !== "none") {
+      const badgePointsMap: Record<string, number> = {
+        "quiz-master": 150,
+        "outstanding-learner": 100,
+      };
+      const badgePoints = badgePointsMap[lesson.quizRewards.badge] || 0;
+      points += badgePoints;
+    }
+
+    return points;
   }
 
   /**

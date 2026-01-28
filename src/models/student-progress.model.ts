@@ -23,6 +23,7 @@ export interface LessonProgress {
   lastAttempted: Date;
   checkpoint?: CheckpointData;
   canMarkCompleted?: boolean;
+  pointsEarned?: number;
 }
 
 export interface ModuleProgress {
@@ -47,6 +48,7 @@ export interface StudentProgress {
   lastWatchedLesson?: any;
   lastWatchedModule?: any;
   progressHistory: ModuleProgress[];
+  accumulatedPoints?: number;
 }
 
 export default function (app: Application): Model<StudentProgress> {
@@ -107,6 +109,10 @@ export default function (app: Application): Model<StudentProgress> {
       canMarkCompleted: {
         type: Boolean,
         default: false,
+      },
+      pointsEarned: {
+        type: Number,
+        default: 0,
       },
     },
     { _id: false }
@@ -189,6 +195,10 @@ export default function (app: Application): Model<StudentProgress> {
         type: Schema.Types.ObjectId,
       },
       progressHistory: [moduleProgressSchema],
+      accumulatedPoints: {
+        type: Number,
+        default: 0,
+      },
     },
     {
       timestamps: true,
