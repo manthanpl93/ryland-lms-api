@@ -325,7 +325,6 @@ export class CourseLessons extends Service {
         .findOne({
           mainCourse: courseId,
         })
-        .populate("owner", "_id name email profilePicture")
         .lean();
 
       if (!course) {
@@ -390,7 +389,6 @@ export class CourseLessons extends Service {
         courseDescription: (course as any).courseDescription,
         learnings: course.learnings,
         courseImage: (course as any).courseImage,
-        owner: (course as any).owner,
         totalStudents: (course as any).totalStudents || 0,
       };
 

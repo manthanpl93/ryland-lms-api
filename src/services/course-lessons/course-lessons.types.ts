@@ -65,7 +65,6 @@ export interface CourseOutlineResponse {
   courseDescription?: string;
   learnings?: string[];
   courseImage?: any;
-  owner?: any;
   totalStudents?: number;
 }
 

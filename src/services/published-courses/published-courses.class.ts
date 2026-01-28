@@ -131,7 +131,6 @@ export class PublishedCourses extends Service {
       category: course.category,
       courseDescription: course.courseDescription,
       difficultyLevel: course.difficultyLevel,
-      owner: course.owner,
       learnings: course.learnings,
       authors: course?.authors,
       outline: course?.outline,

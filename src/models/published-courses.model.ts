@@ -230,7 +230,6 @@ export default function (app: Application): Model<Courses> {
       learnings: { type: [String] },
       courseImage: { type: Object },
       authors: { type: [Schema.Types.ObjectId], ref: "users" },
-      owner: { type: Schema.Types.ObjectId, required: true, ref: "users" },
       outline: { type: [outlineItemSchema], default: [] },
       certificateDetails: { type: Map },
       accuracy: { type: String },
