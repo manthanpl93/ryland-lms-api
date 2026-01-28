@@ -1,12 +1,11 @@
 const { EVENT_GROUPS } = require("../constants/events");
 const { findOrCreateConversation } = require("../helpers/conversationHelper");
-// Temporarily disabled due to missing dependencies
-// const {
-//   processImageAttachments,
-//   extractLinkPreviews,
-//   validateAttachment,
-//   createConversationAttachments
-// } = require("../helpers/attachmentHelper");
+const {
+  processImageAttachments,
+  extractLinkPreviews,
+  validateAttachment,
+  createConversationAttachments
+} = require("../helpers/attachmentHelper");
 
 const { MESSAGE } = EVENT_GROUPS;
 
@@ -28,10 +27,19 @@ function messageHandler(io, socket, connectionManager) {
     try {
       const { recipientId, content, tempId, conversationId, attachments } = data;
       console.log("Message Send Event:", data);
-      // Validate input
-      if (!recipientId || !content) {
+      // Validate input - content is optional if attachments are provided
+      if (!recipientId) {
         socket.emit(MESSAGE.ERROR, {
-          error: "Missing required fields: recipientId and content",
+          error: "Missing required field: recipientId",
+          tempId,
+        });
+        return;
+      }
+
+      // Require either content or attachments
+      if (!content && (!attachments || attachments.length === 0)) {
+        socket.emit(MESSAGE.ERROR, {
+          error: "Message must have either content or attachments",
           tempId,
         });
         return;
@@ -87,8 +95,8 @@ function messageHandler(io, socket, connectionManager) {
         socket.user
       );
 
-      // Extract link previews from content if no link attachments provided
-      const linkAttachments = await extractLinkPreviews(content, processedAttachments);
+      // Extract link previews from content if no link attachments provided and content exists
+      const linkAttachments = content ? await extractLinkPreviews(content, processedAttachments) : [];
       
       // Combine all attachments
       const allAttachments = [...processedAttachments, ...linkAttachments];
@@ -98,7 +106,7 @@ function messageHandler(io, socket, connectionManager) {
         conversationId: conversation._id,
         senderId: socket.user._id,
         recipientId,
-        content: content.trim(),
+        content: content ? content.trim() : '',
         status: {
           delivered: false,
           read: false,
@@ -125,9 +133,12 @@ function messageHandler(io, socket, connectionManager) {
       }
 
       // Update conversation's last message
+      // Show "📎 Attachment" if no text content but has attachments
+      const lastMessageContent = content.trim() || (allAttachments.length > 0 ? '📎 Attachment' : '');
+      
       await Conversation.findByIdAndUpdate(conversation._id, {
         lastMessage: {
-          content: content.trim(),
+          content: lastMessageContent,
           senderId: socket.user._id,
           timestamp: savedMessage.createdAt,
         },
@@ -205,10 +216,19 @@ function messageHandler(io, socket, connectionManager) {
     try {
       const { recipientId, content, replyToMessageId, conversationId, tempId, attachments } = data;
 
-      // Validate required fields
-      if (!recipientId || !content || !replyToMessageId || !conversationId) {
+      // Validate required fields - content is optional if attachments are provided
+      if (!recipientId || !replyToMessageId || !conversationId) {
         socket.emit(MESSAGE.ERROR, {
-          error: "Missing required fields: recipientId, content, replyToMessageId, conversationId",
+          error: "Missing required fields: recipientId, replyToMessageId, conversationId",
+          tempId,
+        });
+        return;
+      }
+
+      // Require either content or attachments
+      if (!content && (!attachments || attachments.length === 0)) {
+        socket.emit(MESSAGE.ERROR, {
+          error: "Reply message must have either content or attachments",
           tempId,
         });
         return;
@@ -267,8 +287,8 @@ function messageHandler(io, socket, connectionManager) {
         socket.user
       );
 
-      // Extract link previews from content if no link attachments provided
-      const linkAttachments = await extractLinkPreviews(content, processedAttachments);
+      // Extract link previews from content if no link attachments provided and content exists
+      const linkAttachments = content ? await extractLinkPreviews(content, processedAttachments) : [];
       
       // Combine all attachments
       const allAttachments = [...processedAttachments, ...linkAttachments];
@@ -278,7 +298,7 @@ function messageHandler(io, socket, connectionManager) {
         conversationId: conversationId,
         senderId: socket.user._id,
         recipientId,
-        content: content.trim(),
+        content: content ? content.trim() : '',
         status: {
           delivered: false,
           read: false,
@@ -312,9 +332,12 @@ function messageHandler(io, socket, connectionManager) {
       }
 
       // Update conversation's last message
+      // Show "📎 Attachment" if no text content but has attachments
+      const replyLastMessageContent = content.trim() || (allAttachments.length > 0 ? '📎 Attachment' : '');
+      
       await Conversation.findByIdAndUpdate(conversationId, {
         lastMessage: {
-          content: content.trim(),
+          content: replyLastMessageContent,
           senderId: socket.user._id,
           timestamp: savedMessage.createdAt,
         },

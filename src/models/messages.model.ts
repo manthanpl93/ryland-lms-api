@@ -108,7 +108,8 @@ export default function (app: Application): Model<MessageDocument> {
       
       content: {
         type: String,
-        required: true,
+        required: false,  // Optional - messages can have only attachments
+        default: '',
         trim: true,
       },
       
