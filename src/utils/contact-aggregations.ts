@@ -74,6 +74,30 @@ export const getStudentContactsAggregation = (
         ],
       },
     },
+    // Union with all admins
+    {
+      $unionWith: {
+        coll: "users",
+        pipeline: [
+          {
+            $match: {
+              role: "Admin",
+              _id: { $ne: objectIdUserId },
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              firstName: 1,
+              lastName: 1,
+              email: 1,
+              role: 1,
+              schoolId: 1,
+            },
+          },
+        ],
+      },
+    },
     // Deduplicate
     {
       $group: {
@@ -179,6 +203,30 @@ export const getTeacherContactsAggregation = (
             $match: {
               role: "Teacher",
               schoolId: objectIdSchoolId,
+              _id: { $ne: objectIdUserId },
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              firstName: 1,
+              lastName: 1,
+              email: 1,
+              role: 1,
+              schoolId: 1,
+            },
+          },
+        ],
+      },
+    },
+    // Union with all admins
+    {
+      $unionWith: {
+        coll: "users",
+        pipeline: [
+          {
+            $match: {
+              role: "Admin",
               _id: { $ne: objectIdUserId },
             },
           },
