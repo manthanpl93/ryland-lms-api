@@ -50,7 +50,7 @@ export class Conversations extends Service {
     // Check for existing conversation
     const existing = await this.Model.findOne({
       participants: { $all: participants },
-    });
+    }).populate("participants", "firstName lastName avatar email role");
 
     if (existing) {
       return existing;
@@ -70,6 +70,9 @@ export class Conversations extends Service {
         [recipientId]: 0,
       },
     });
+
+    // Populate participants before returning
+    await conversation.populate("participants", "firstName lastName avatar email role");
 
     return conversation;
   }
