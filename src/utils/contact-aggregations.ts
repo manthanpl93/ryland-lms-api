@@ -44,7 +44,7 @@ export const getStudentContactsAggregation = (
     // Union with teachers from classTeachers
     {
       $unionWith: {
-        coll: "classTeachers",
+        coll: "classteachers",
         pipeline: [
           {
             $match: {
