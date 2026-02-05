@@ -14,6 +14,9 @@ export interface IUser {
   otpGeneratedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
+  // Class assignment fields (populated)
+  assignedClass?: any;
+  assignedClasses?: any[];
 }
 
 // Base interface for user requests without system fields
@@ -26,6 +29,9 @@ interface IUserBase {
   role: "Student" | "Teacher" | "Admin";
   status: "Active" | "Inactive" | "Pending";
   schoolId?: string;
+  // Class assignment fields (input)
+  classId?: string | null;
+  classIds?: string[];
   // Legacy fields for backward compatibility
   name?: string;
   mobileNo?: string;

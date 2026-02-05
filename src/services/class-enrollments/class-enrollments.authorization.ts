@@ -8,6 +8,12 @@ import { Application } from "../../declarations";
 export const authorizeClassEnrollments = (app: Application) => {
   return async (context: any) => {
     const { params, method } = context;
+    
+    // Allow internal calls (provider === undefined)
+    if (params.provider === undefined) {
+      return context;
+    }
+    
     const userId = params?.user?._id;
     const userRole = params?.user?.role;
 

@@ -8,6 +8,11 @@ const { authenticate } = authentication.hooks;
 const restrictRoles =
 (allowedRoles: string[]) =>
   async (context: any) => {
+    // Allow internal calls (provider === undefined)
+    if (context.params.provider === undefined) {
+      return context;
+    }
+    
     const role = context.params?.user?.role;
 
     if (!role || !allowedRoles.includes(role)) {
